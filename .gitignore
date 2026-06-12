@@ -1,0 +1,22 @@
+# 依赖
+node_modules/
+
+# 构建输出
+dist/
+
+# 开发环境
+.env
+.env.local
+.env.*.local
+
+# Astro 缓存
+.astro/
+
+# 编辑器
+.vscode/
+.idea/
+
+# 系统文件
+*.log
+.DS_Store
+Thumbs.db

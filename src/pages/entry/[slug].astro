@@ -1,0 +1,77 @@
+---
+import fs from 'node:fs';
+import path from 'node:path';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import entries from '../../data/entries.json';
+import topics from '../../data/topics.json';
+import { renderWikiLinks } from '../../lib/wiki-parser';
+
+export async function getStaticPaths() {
+  return entries.map((entry) => ({
+    params: { slug: entry.slug },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const entryMap = Object.fromEntries(entries.map((e) => [e.slug, e]));
+
+const contentPath = path.resolve('src/content/entries', entry.contentFile);
+let contentHtml = '';
+if (fs.existsSync(contentPath)) {
+  const raw = fs.readFileSync(contentPath, 'utf-8');
+  contentHtml = renderWikiLinks(raw, (slug) => entryMap[slug]?.title || slug);
+}
+
+const topicContexts = topics
+  .filter((t) => t.entries.includes(entry.slug))
+  .map((topic) => {
+    const idx = topic.entries.indexOf(entry.slug);
+    return {
+      topic,
+      prevEntry: idx > 0 ? topic.entries[idx - 1] : null,
+      nextEntry: idx < topic.entries.length - 1 ? topic.entries[idx + 1] : null,
+    };
+  });
+
+const entryIdx = entries.findIndex((e) => e.slug === entry.slug);
+const prevInTimeline = entryIdx > 0 ? entries[entryIdx - 1] : null;
+const nextInTimeline = entryIdx < entries.length - 1 ? entries[entryIdx + 1] : null;
+---
+
+<BaseLayout title={entry.title}>
+  <h1>{entry.title}</h1>
+  <time>{entry.date}</time>
+
+  <div class="entry-content">
+    <Fragment set:html={contentHtml} />
+  </div>
+
+  <div class="entry-nav">
+    <span>
+      {prevInTimeline && <a href={`/entry/${prevInTimeline.slug}`}>← {prevInTimeline.title}</a>}
+    </span>
+    <span>
+      {nextInTimeline && <a href={`/entry/${nextInTimeline.slug}`}>{nextInTimeline.title} →</a>}
+    </span>
+  </div>
+
+  {topicContexts.length > 0 && (
+    <section>
+      <h2>所属专题</h2>
+      {topicContexts.map((ctx) => {
+        const prev = ctx.prevEntry ? entryMap[ctx.prevEntry] : null;
+        const next = ctx.nextEntry ? entryMap[ctx.nextEntry] : null;
+        return (
+          <div>
+            <a href={`/topic/${ctx.topic.slug}`}>{ctx.topic.title}</a>
+            <nav>
+              {prev && <a href={`/entry/${prev.slug}`}>← {prev.title}</a>}
+              {next && <a href={`/entry/${next.slug}`}>{next.title} →</a>}
+            </nav>
+          </div>
+        );
+      })}
+    </section>
+  )}
+</BaseLayout>

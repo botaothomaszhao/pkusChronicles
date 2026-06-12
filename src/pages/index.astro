@@ -1,0 +1,16 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import entries from '../data/entries.json';
+---
+
+<BaseLayout title="时间线">
+  <h1>北大附中校史时间线</h1>
+  {
+    entries.map((entry) => (
+      <article>
+        <time>{entry.date}</time>
+        <a href={`/entry/${entry.slug}`}>{entry.title}</a>
+      </article>
+    ))
+  }
+</BaseLayout>

@@ -1,0 +1,15 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import topics from '../../data/topics.json';
+---
+
+<BaseLayout title="专题">
+  <h1>专题列表</h1>
+  <ul>
+    {topics.map((topic) => (
+      <li>
+        <a href={`/topic/${topic.slug}`}>{topic.title}</a>
+      </li>
+    ))}
+  </ul>
+</BaseLayout>
