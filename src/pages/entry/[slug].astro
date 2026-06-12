@@ -4,7 +4,7 @@ import path from 'node:path';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import entries from '../../data/entries.json';
 import topics from '../../data/topics.json';
-import { renderWikiLinks } from '../../lib/wiki-parser';
+import { renderWikiLinks } from '@/lib/wiki-parser.ts';
 
 export async function getStaticPaths() {
   return entries.map((entry) => ({
