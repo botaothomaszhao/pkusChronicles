@@ -10,7 +10,6 @@ Entry {
   slug: string            // URL 标识，如 "1920-jianxiao"
   title: string           // 标题
   date: string            // 展示用时间，可以是任意格式，如 "1920-09-15"、"1920"、"2025年春"
-  summary: string         // 摘要（用于时间线/专题列表卡片）
   contentFile: string     // 内容 HTML 文件路径，如 "1920-jianxiao.html"
 }
 ```
