@@ -11,6 +11,7 @@ Entry {
   title: string           // 标题
   date: string            // 展示用时间，可以是任意格式，如 "1920-09-15"、"1920"、"2025年春"
   contentFile: string     // 内容 HTML 文件路径，如 "1920-jianxiao.html"
+  yqid?: string           // 语雀原始 slug，用于去重
 }
 ```
 

@@ -15,6 +15,10 @@ npm run preview  # 预览构建结果
 
 无 lint / typecheck / test 脚本。提交前手动 `npm run build` 确认无报错。
 
+```bash
+node scripts/yuque-import.mjs <语雀导出目录>   # 导入语雀知识库到 entries
+```
+
 ## 项目结构
 
 - `src/data/entries.json` — 所有条目元数据，数组顺序 = 时间线顺序
@@ -23,6 +27,7 @@ npm run preview  # 预览构建结果
 - `src/content/topics/*.html` — 专题说明（纯 HTML）
 - `src/lib/wiki-parser.ts` — `[[slug]]` / `[[slug|text]]` wiki 链接解析与渲染
 - `src/lib/backlinks.ts` — 构建时反向引用计算（目前 `content` 读取为空，待修复）
+- `scripts/yuque-import.mjs` — 从语雀导出目录导入条目
 - `ARCHITECTURE.md` — 详尽的架构文档，数据处理和路由逻辑以它为参考
 
 ## 路径别名

@@ -9,7 +9,8 @@
     "preview": "astro preview"
   },
   "dependencies": {
-    "astro": "^5.0.0"
+    "astro": "^5.0.0",
+    "pinyin": "^4.0.0"
   },
   "devDependencies": {
     "@types/node": "^25.9.3"
