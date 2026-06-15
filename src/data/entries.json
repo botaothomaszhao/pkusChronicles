@@ -3,20 +3,21 @@
     "slug": "1960-jianxiao",
     "title": "1960年建校",
     "date": "1960",
-    "contentFile": "1960-jianxiao.html"
+    "contentFile": "1960-jianxiao.html",
+    "yqid": "qwer1234"
   },
   {
     "slug": "2009-wang-zheng-ren-bei-da-fu-zhong-xiao-chang",
     "title": "王铮任北大附中校长",
-    "date": "2009年4月",
+    "date": "2009.4",
     "contentFile": "2009-wang-zheng-ren-bei-da-fu-zhong-xiao-chang.html",
     "yqid": "gf987r8my5htw5zg"
   },
   {
-    "slug": "ma-yu-guo",
-    "title": "马玉国",
-    "date": "",
-    "contentFile": "ma-yu-guo.html",
+    "slug": "2022-ma-yu-guo-ren-zhi",
+    "title": "马玉国任职",
+    "date": "2022.3.15",
+    "contentFile": "2022-ma-yu-guo-ren-zhi.html",
     "yqid": "rwhshgc21giywdm9"
   }
 ]

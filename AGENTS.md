@@ -43,7 +43,7 @@ node scripts/yuque-import.mjs <语雀导出目录>   # 导入语雀知识库到 
 ## 数据模型
 
 见 `ARCHITECTURE.md` 的完整定义。核心要点：
-- `Entry`: slug, title, date, contentFile
+- `Entry`: slug, title, date, contentFile, yqid
 - `Topic`: slug, title, descriptionFile, entries[]
 - 时间线顺序 = entries.json 数组顺序（不依赖 date 字段）
 - 一个条目可属 0~N 个专题
@@ -52,6 +52,10 @@ node scripts/yuque-import.mjs <语雀导出目录>   # 导入语雀知识库到 
 
 commit消息格式为 `<type>(<scope>): <subject>`，正文用中文
 如果是内容更新，scope 填 `content`
+
+## AGENT指令
+
+项目结构等有较大变动时，需要更新 `ARCHITECTURE.md` 和 `AGENTS.md` 中的相关描述。请确保两者和实际代码保持一致。
 
 ## todolist
 

@@ -23,7 +23,7 @@ Topic {
   slug: string            // URL 标识，如 "tiyu"
   title: string           // 专题名
   descriptionFile: string // 专题说明 HTML 文件路径
-  entries: string[]       // 该专题下的条目 slug 列表（有序）
+  entries: string[]       // 该专题下的条目 yqid 列表（有序）；无 yqid 的条目可回退用 slug
 }
 ```
 

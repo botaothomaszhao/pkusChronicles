@@ -23,10 +23,13 @@ if (fs.existsSync(contentPath)) {
   contentHtml = renderWikiLinks(raw, (slug) => entryMap[slug]?.title || slug);
 }
 
+const entryId = entry.yqid || entry.slug;
+const findEntry = (id: string) => entries.find((e) => e.yqid === id || e.slug === id);
+
 const topicContexts = topics
-  .filter((t) => t.entries.includes(entry.slug))
+  .filter((t) => t.entries.includes(entryId))
   .map((topic) => {
-    const idx = topic.entries.indexOf(entry.slug);
+    const idx = topic.entries.indexOf(entryId);
     return {
       topic,
       prevEntry: idx > 0 ? topic.entries[idx - 1] : null,
@@ -60,8 +63,8 @@ const nextInTimeline = entryIdx < entries.length - 1 ? entries[entryIdx + 1] : n
     <section>
       <h2>所属专题</h2>
       {topicContexts.map((ctx) => {
-        const prev = ctx.prevEntry ? entryMap[ctx.prevEntry] : null;
-        const next = ctx.nextEntry ? entryMap[ctx.nextEntry] : null;
+        const prev = ctx.prevEntry ? findEntry(ctx.prevEntry) : null;
+        const next = ctx.nextEntry ? findEntry(ctx.nextEntry) : null;
         return (
           <div>
             <a href={`/topic/${ctx.topic.slug}`}>{ctx.topic.title}</a>

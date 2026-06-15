@@ -21,7 +21,7 @@ if (fs.existsSync(descPath)) {
 }
 
 const topicEntries = topic.entries
-  .map((slug) => entries.find((e) => e.slug === slug))
+  .map((id) => entries.find((e) => e.yqid === id || e.slug === id))
   .filter((e): e is NonNullable<typeof e> => e != null);
 ---
 

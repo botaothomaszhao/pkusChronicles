@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
 import { pinyin } from 'pinyin';
 
@@ -60,14 +60,11 @@ function main() {
   }
 
   const newEntries = [];
+  let updatedCount = 0;
 
   for (const docMeta of docs) {
     const yuqueSlug = docMeta.slug;
     if (!yuqueSlug) continue;
-    if (yqidMap.has(yuqueSlug)) {
-      console.log(`[跳过] ${yuqueSlug}`);
-      continue;
-    }
 
     // read doc body
     const docPath = join(yuqueDir, `${yuqueSlug}.json`);
@@ -92,13 +89,48 @@ function main() {
       displayTitle = titleRaw.substring(sepIndex + 3).trim();
     }
 
+    if (!date) {
+      console.warn(`[缺少时间] ${yuqueSlug}  (${displayTitle})`);
+    }
+
     // generate slug
     const yearMatch = date.match(/\d{4}/);
     const yearPrefix = yearMatch ? yearMatch[0] : '';
     const slugBase = toSlug(displayTitle);
     let slug = yearPrefix ? `${yearPrefix}-${slugBase}` : slugBase;
 
-    // dedup slug
+    // overwrite existing entry
+    if (yqidMap.has(yuqueSlug)) {
+      const existing = yqidMap.get(yuqueSlug);
+
+      // dedup slug (exclude self)
+      const usedSlugs = new Set(existingEntries.filter(e => e !== existing).map(e => e.slug));
+      let finalSlug = slug;
+      let counter = 1;
+      while (usedSlugs.has(finalSlug)) {
+        finalSlug = yearPrefix ? `${yearPrefix}-${slugBase}-${counter}` : `${slugBase}-${counter}`;
+        counter++;
+      }
+
+      // rename file if slug changed
+      const newFile = `${finalSlug}.html`;
+      const oldPath = join(ENTRIES_DIR, existing.contentFile);
+      const newPath = join(ENTRIES_DIR, newFile);
+      if (oldPath !== newPath) {
+        if (existsSync(oldPath)) renameSync(oldPath, newPath);
+      }
+      writeFileSync(newPath, body, 'utf-8');
+
+      existing.slug = finalSlug;
+      existing.title = displayTitle;
+      existing.date = date;
+      existing.contentFile = newFile;
+      console.log(`[覆盖] ${yuqueSlug} → ${finalSlug}  (${displayTitle})`);
+      updatedCount++;
+      continue;
+    }
+
+    // dedup slug among remaining entries
     const usedSlugs = new Set([
       ...existingEntries.map(e => e.slug),
       ...newEntries.map(e => e.slug),
@@ -129,7 +161,8 @@ function main() {
   // merge & write
   const merged = [...existingEntries, ...newEntries];
   writeFileSync(DATA_FILE, JSON.stringify(merged, null, 2) + '\n', 'utf-8');
-  console.log(`\n完成: ${existingEntries.length} 已有 + ${newEntries.length} 新增 = ${merged.length} 总计`);
+  const added = newEntries.length;
+  console.log(`\n完成: ${existingEntries.length} 已有 (${updatedCount} 覆盖) + ${added} 新增 = ${merged.length} 总计`);
 }
 
 main();
