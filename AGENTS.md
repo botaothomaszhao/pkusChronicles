@@ -16,7 +16,7 @@ npm run preview  # 预览构建结果
 无 lint / typecheck / test 脚本。提交前手动 `npm run build` 确认无报错。
 
 ```bash
-node scripts/yuque-import.mjs <语雀导出目录>   # 导入语雀知识库到 entries
+node scripts/yuque-import.mjs [--topic <slug>] <语雀导出目录>   # 导入语雀知识库到 entries
 ```
 
 ## 项目结构

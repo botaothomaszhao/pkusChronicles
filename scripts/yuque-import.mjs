@@ -4,6 +4,8 @@ import { pinyin } from 'pinyin';
 
 const ENTRIES_DIR = join(process.cwd(), 'src/content/entries');
 const DATA_FILE = join(process.cwd(), 'src/data/entries.json');
+const TOPICS_FILE = join(process.cwd(), 'src/data/topics.json');
+const TOPICS_DIR = join(process.cwd(), 'src/content/topics');
 
 function stripTones(s) {
   return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -22,9 +24,18 @@ function toSlug(text) {
 }
 
 function main() {
-  const yuqueDir = process.argv[2];
+  const args = process.argv.slice(2);
+  let yuqueDir = '';
+  let topicSlug = '';
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--topic') {
+      topicSlug = args[++i];
+    } else {
+      yuqueDir = args[i];
+    }
+  }
   if (!yuqueDir) {
-    console.error('用法: node scripts/yuque-import.mjs <语雀导出目录路径>');
+    console.error('用法: node scripts/yuque-import.mjs [--topic <slug>] <语雀导出目录路径>');
     process.exit(1);
   }
 
@@ -61,6 +72,7 @@ function main() {
 
   const newEntries = [];
   let updatedCount = 0;
+  const processedYqids = new Set();
 
   for (const docMeta of docs) {
     const yuqueSlug = docMeta.slug;
@@ -125,6 +137,7 @@ function main() {
       existing.title = displayTitle;
       existing.date = date;
       existing.contentFile = newFile;
+      processedYqids.add(yuqueSlug);
       console.log(`[覆盖] ${yuqueSlug} → ${finalSlug}  (${displayTitle})`);
       updatedCount++;
       continue;
@@ -154,6 +167,7 @@ function main() {
       contentFile: `${finalSlug}.html`,
       yqid: yuqueSlug,
     };
+    processedYqids.add(yuqueSlug);
     newEntries.push(entry);
     console.log(`[新增] ${yuqueSlug} → ${finalSlug}  (${displayTitle})`);
   }
@@ -163,6 +177,32 @@ function main() {
   writeFileSync(DATA_FILE, JSON.stringify(merged, null, 2) + '\n', 'utf-8');
   const added = newEntries.length;
   console.log(`\n完成: ${existingEntries.length} 已有 (${updatedCount} 覆盖) + ${added} 新增 = ${merged.length} 总计`);
+
+  // handle --topic
+  if (topicSlug && processedYqids.size > 0) {
+    let topics = [];
+    if (existsSync(TOPICS_FILE)) {
+      topics = JSON.parse(readFileSync(TOPICS_FILE, 'utf-8'));
+    }
+    let topic = topics.find(t => t.slug === topicSlug);
+    if (!topic) {
+      if (!existsSync(TOPICS_DIR)) mkdirSync(TOPICS_DIR, { recursive: true });
+      const descFile = `${topicSlug}.html`;
+      const descPath = join(TOPICS_DIR, descFile);
+      if (!existsSync(descPath)) writeFileSync(descPath, '', 'utf-8');
+      topic = { slug: topicSlug, title: topicSlug, descriptionFile: descFile, entries: [] };
+      topics.push(topic);
+    }
+    let addedCount = 0;
+    for (const yqid of processedYqids) {
+      if (!topic.entries.includes(yqid)) {
+        topic.entries.push(yqid);
+        addedCount++;
+      }
+    }
+    writeFileSync(TOPICS_FILE, JSON.stringify(topics, null, 2) + '\n', 'utf-8');
+    console.log(`[专题] ${topicSlug}: 添加 ${addedCount} 个条目`);
+  }
 }
 
 main();
