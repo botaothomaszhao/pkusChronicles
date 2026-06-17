@@ -49,7 +49,7 @@ const nextInTimeline = entryIdx < entries.length - 1 ? entries[entryIdx + 1] : n
   <div class="entry-content">
     <Fragment set:html={contentHtml} />
   </div>
-
+  <br>
   <div class="entry-nav">
     <span>
       {prevInTimeline && <a href={`/entry/${prevInTimeline.slug}`}>← {prevInTimeline.title}</a>}
