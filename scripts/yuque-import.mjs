@@ -1,5 +1,7 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync, mkdtempSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { execSync } from 'node:child_process';
 import { pinyin } from 'pinyin';
 
 const ENTRIES_DIR = join(process.cwd(), 'src/content/entries');
@@ -37,6 +39,23 @@ function main() {
   if (!yuqueDir) {
     console.error('用法: node scripts/yuque-import.mjs [--topic <slug>] <语雀导出目录路径>');
     process.exit(1);
+  }
+
+  // 如果输入是 .lakebook 文件，作为 tar 解压
+  if (yuqueDir.endsWith('.lakebook')) {
+    if (!existsSync(yuqueDir)) {
+      console.error(`错误: 找不到 ${yuqueDir}`);
+      process.exit(1);
+    }
+    const tmpDir = mkdtempSync(join(tmpdir(), 'yuque-import-'));
+    console.log(`[解压] ${yuqueDir} → ${tmpDir}`);
+    execSync(`tar -xf "${yuqueDir}" -C "${tmpDir}"`, { stdio: 'pipe' });
+    const items = readdirSync(tmpDir).filter(f => !f.startsWith('.'));
+    if (items.length !== 1) {
+      console.error(`错误: .lakebook 解压后应包含 1 个目录，实际有 ${items.length} 个`);
+      process.exit(1);
+    }
+    yuqueDir = join(tmpDir, items[0]);
   }
 
   // read $meta.json
@@ -172,8 +191,20 @@ function main() {
     console.log(`[新增] ${yuqueSlug} → ${finalSlug}  (${displayTitle})`);
   }
 
-  // merge & write
+  // merge & sort by date（同 date 保持相对顺序，稳定排序）
+  function compareDate(a, b) {
+    const pa = a.date.split('.').map(Number);
+    const pb = b.date.split('.').map(Number);
+    const len = Math.max(pa.length, pb.length);
+    for (let i = 0; i < len; i++) {
+      const va = pa[i] ?? 0;
+      const vb = pb[i] ?? 0;
+      if (va !== vb) return va - vb;
+    }
+    return 0;
+  }
   const merged = [...existingEntries, ...newEntries];
+  merged.sort(compareDate);
   writeFileSync(DATA_FILE, JSON.stringify(merged, null, 2) + '\n', 'utf-8');
   const added = newEntries.length;
   console.log(`\n完成: ${existingEntries.length} 已有 (${updatedCount} 覆盖) + ${added} 新增 = ${merged.length} 总计`);
