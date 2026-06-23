@@ -6,38 +6,38 @@ import entries from '../../data/entries.json';
 import topics from '../../data/topics.json';
 
 export async function getStaticPaths() {
-  return topics.map((topic) => ({
-    params: { slug: topic.slug },
-    props: { topic },
-  }));
+    return topics.map((topic) => ({
+        params: {slug: topic.slug},
+        props: {topic},
+    }));
 }
 
-const { topic } = Astro.props;
+const {topic} = Astro.props;
 
 const descPath = path.resolve('src/content/topics', topic.descriptionFile);
 let descHtml = '';
 if (fs.existsSync(descPath)) {
-  descHtml = fs.readFileSync(descPath, 'utf-8');
+    descHtml = fs.readFileSync(descPath, 'utf-8');
 }
 
 const topicEntries = topic.entries
-  .map((id) => entries.find((e) => e.yqid === id || e.slug === id))
-  .filter((e): e is NonNullable<typeof e> => e != null);
+    .map((id) => entries.find((e) => e.yqid === id || e.slug === id))
+    .filter((e): e is NonNullable<typeof e> => e != null);
 ---
 
 <BaseLayout title={topic.title}>
-  <h1>{topic.title}</h1>
+    <h1>{topic.title}</h1>
 
-  <div class="topic-description">
-    <Fragment set:html={descHtml} />
-  </div>
+    <div class="topic-description">
+        <Fragment set:html={descHtml}/>
+    </div>
 
-  <ol>
+    <hr>
     {topicEntries.map((entry) => (
-      <li>
-        <a href={`/entry/${entry.slug}`}>{entry.title}</a>
-        <time>{entry.date}</time>
-      </li>
+            <article>
+                <time>{entry.date}</time>
+                <a href={`/entry/${entry.slug}`}>{entry.title}</a>
+            </article>
     ))}
-  </ol>
+
 </BaseLayout>

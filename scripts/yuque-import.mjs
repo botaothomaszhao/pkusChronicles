@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync, mkdtempSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execSync } from 'node:child_process';
@@ -92,6 +92,8 @@ function main() {
   const newEntries = [];
   let updatedCount = 0;
   const processedYqids = new Set();
+  const topicDocs = [];
+  const removeEntryYqids = new Set();
 
   for (const docMeta of docs) {
     const yuqueSlug = docMeta.slug;
@@ -110,8 +112,18 @@ function main() {
       continue;
     }
 
-    // parse title: "日期 - 标题"
+    // 专题文档: 标题格式为 "topic - 标题"
     const titleRaw = docMeta.title;
+    if (titleRaw.startsWith('topic - ')) {
+      const topicTitle = titleRaw.slice(7).trim();
+      const topicSlugFromTitle = toSlug(topicTitle);
+      topicDocs.push({ yqid: yuqueSlug, slug: topicSlugFromTitle, title: topicTitle, body });
+      if (yqidMap.has(yuqueSlug)) removeEntryYqids.add(yuqueSlug);
+      console.log(`[专题] ${yuqueSlug} → ${topicSlugFromTitle}  (${topicTitle})`);
+      continue;
+    }
+
+    // parse title: "日期 - 标题"
     let date = '';
     let displayTitle = titleRaw;
     const sepIndex = titleRaw.indexOf(' - ');
@@ -191,6 +203,16 @@ function main() {
     console.log(`[新增] ${yuqueSlug} → ${finalSlug}  (${displayTitle})`);
   }
 
+  // 移除转为专题的旧条目
+  if (removeEntryYqids.size > 0) {
+    for (const yqid of removeEntryYqids) {
+      const entry = yqidMap.get(yqid);
+      const entryPath = join(ENTRIES_DIR, entry.contentFile);
+      if (existsSync(entryPath)) rmSync(entryPath);
+    }
+    existingEntries = existingEntries.filter(e => !removeEntryYqids.has(e.yqid));
+  }
+
   // merge & sort by date（同 date 保持相对顺序，稳定排序）
   function compareDate(a, b) {
     const pa = a.date.split('.').map(Number);
@@ -209,30 +231,62 @@ function main() {
   const added = newEntries.length;
   console.log(`\n完成: ${existingEntries.length} 已有 (${updatedCount} 覆盖) + ${added} 新增 = ${merged.length} 总计`);
 
-  // handle --topic
-  if (topicSlug && processedYqids.size > 0) {
+  // 处理专题
+  const hasTopicWork = topicDocs.length > 0 || (topicSlug && processedYqids.size > 0);
+  if (hasTopicWork) {
     let topics = [];
     if (existsSync(TOPICS_FILE)) {
       topics = JSON.parse(readFileSync(TOPICS_FILE, 'utf-8'));
     }
-    let topic = topics.find(t => t.slug === topicSlug);
-    if (!topic) {
-      if (!existsSync(TOPICS_DIR)) mkdirSync(TOPICS_DIR, { recursive: true });
-      const descFile = `${topicSlug}.html`;
-      const descPath = join(TOPICS_DIR, descFile);
-      if (!existsSync(descPath)) writeFileSync(descPath, '', 'utf-8');
-      topic = { slug: topicSlug, title: topicSlug, descriptionFile: descFile, entries: [] };
-      topics.push(topic);
-    }
-    let addedCount = 0;
-    for (const yqid of processedYqids) {
-      if (!topic.entries.includes(yqid)) {
-        topic.entries.push(yqid);
-        addedCount++;
+    if (!existsSync(TOPICS_DIR)) mkdirSync(TOPICS_DIR, { recursive: true });
+
+    // 处理本次导入的专题文档
+    for (let i = 0; i < topicDocs.length; i++) {
+      const td = topicDocs[i];
+      const isFirstForArg = topicSlug && i === 0;
+      const targetSlug = isFirstForArg ? topicSlug : td.slug;
+      const descFile = `${targetSlug}.html`;
+
+      // 先按 yqid 查找，再按 slug 查找
+      let topic = topics.find(t => t.yqid === td.yqid);
+      if (!topic) topic = topics.find(t => t.slug === targetSlug);
+
+      if (topic) {
+        topic.title = td.title;
+        if (td.yqid && !topic.yqid) topic.yqid = td.yqid;
+        topic.slug = targetSlug;
+        topic.descriptionFile = descFile;
+      } else {
+        topic = { slug: targetSlug, title: td.title, descriptionFile: descFile, entries: [], yqid: td.yqid };
+        topics.push(topic);
       }
+
+      writeFileSync(join(TOPICS_DIR, descFile), td.body, 'utf-8');
+      console.log(`[专题${isFirstForArg ? '描述' : ''}] ${targetSlug}: ${td.title}`);
     }
+
+    // 将条目 yqid 加入 --topic 专题
+    if (topicSlug && processedYqids.size > 0) {
+      let topic = topics.find(t => t.slug === topicSlug);
+      if (!topic) {
+        const descFile = `${topicSlug}.html`;
+        const descPath = join(TOPICS_DIR, descFile);
+        if (!existsSync(descPath)) writeFileSync(descPath, '', 'utf-8');
+        topic = { slug: topicSlug, title: topicSlug, descriptionFile: descFile, entries: [] };
+        topics.push(topic);
+      }
+      let addedCount = 0;
+      for (const entry of merged) {
+        const yqid = entry.yqid;
+        if (yqid && processedYqids.has(yqid) && !topic.entries.includes(yqid)) {
+          topic.entries.push(yqid);
+          addedCount++;
+        }
+      }
+      console.log(`[专题] ${topicSlug}: 添加 ${addedCount} 个条目`);
+    }
+
     writeFileSync(TOPICS_FILE, JSON.stringify(topics, null, 2) + '\n', 'utf-8');
-    console.log(`[专题] ${topicSlug}: 添加 ${addedCount} 个条目`);
   }
 }
 
