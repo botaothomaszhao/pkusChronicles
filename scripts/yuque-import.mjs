@@ -42,7 +42,7 @@ function main() {
   }
 
   // 如果输入是 .lakebook 文件，作为 tar 解压
-  if (yuqueDir.endsWith('.lakebook')) {
+  if (yuqueDir.endsWith('.lakebook') || yuqueDir.endsWith('.tar')) {
     if (!existsSync(yuqueDir)) {
       console.error(`错误: 找不到 ${yuqueDir}`);
       process.exit(1);
