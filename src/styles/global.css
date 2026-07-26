@@ -148,7 +148,6 @@
 .lake-content .ne-quote {
     margin: 5px 0;
     padding-left: 1em;
-    margin-left: 0;
     border-left: 3px solid #e7e9e8;
     opacity: .7
 }
@@ -474,5 +473,19 @@
     .lake-column-item {
         margin-right: 0 !important
     }
+}
+
+/* 图片说明文字 */
+.image-figure {
+    display: block;
+    width: fit-content;
+    margin: 16px 0
+}
+
+.image-figure figcaption {
+    color: #8c8c8c;
+    font-size: 13px;
+    margin-top: 4px;
+    text-align: center
 }
 

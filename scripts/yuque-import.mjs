@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execSync } from 'node:child_process';
 import { pinyin } from 'pinyin';
+import { processContentHtml } from './process-html.mjs';
 
 const ENTRIES_DIR = join(process.cwd(), 'src/content/entries');
 const DATA_FILE = join(process.cwd(), 'src/data/entries.json');
@@ -25,7 +26,7 @@ function toSlug(text) {
     || 'untitled';
 }
 
-function main() {
+async function main() {
   const args = process.argv.slice(2);
   let yuqueDir = '';
   let topicSlug = '';
@@ -106,11 +107,12 @@ function main() {
       continue;
     }
     const docRaw = JSON.parse(readFileSync(docPath, 'utf-8'));
-    const body = docRaw.doc?.body;
-    if (!body) {
+    const bodyRaw = docRaw.doc?.body;
+    if (!bodyRaw) {
       console.warn(`[警告] ${yuqueSlug} body 为空`);
       continue;
     }
+    const body = await processContentHtml(bodyRaw);
 
     // 专题文档: 标题格式为 "topic - 标题"
     const titleRaw = docMeta.title;
@@ -290,4 +292,4 @@ function main() {
   }
 }
 
-main();
+await main();

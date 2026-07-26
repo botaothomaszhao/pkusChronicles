@@ -16,7 +16,8 @@ npm run preview  # 预览构建结果
 无 lint / typecheck / test 脚本。提交前手动 `npm run build` 确认无报错。
 
 ```bash
-node scripts/yuque-import.mjs [--topic <slug>] <语雀导出目录>   # 导入语雀知识库到 entries ，目录为 .lakebook / .tar 会自动解压
+node scripts/yuque-import.mjs [--topic <slug>] <语雀导出目录>   # 导入语雀知识库到 entries ，自动下载图片到 public/img/ 并替换 src
+node scripts/process-html.mjs                        # HTML 处理管线（被 import 调用，也可独立使用）
 ```
 
 ## 项目结构
@@ -27,7 +28,9 @@ node scripts/yuque-import.mjs [--topic <slug>] <语雀导出目录>   # 导入�
 - `src/content/topics/*.html` — 专题说明（纯 HTML）
 - `src/lib/wiki-parser.ts` — `[[slug]]` / `[[slug|text]]` wiki 链接解析与渲染
 - `src/lib/backlinks.ts` — 构建时反向引用计算（目前 `content` 读取为空，待修复）
-- `scripts/yuque-import.mjs` — 从语雀导出目录导入条目
+- `scripts/yuque-import.mjs` — 从语雀导出目录导入条目，自动下载图片到 `public/img/` 并替换 HTML 中的 src
+- `scripts/process-html.mjs` — HTML 处理管线（图片下载、后续注释格式等其他转换）
+- `public/img/` — 导入时下载的本地图片（`.gitignore` 中排除，不上传 git）
 - `ARCHITECTURE.md` — 详尽的架构文档，数据处理和路由逻辑以它为参考
 - `TODO.md` — 待办事项列表，面向开发者，没有提到时无需关注
 
@@ -38,7 +41,7 @@ node scripts/yuque-import.mjs [--topic <slug>] <语雀导出目录>   # 导入�
 ## 内容约定
 
 - 条目正文 HTML 中使用 `[[slug]]` 或 `[[slug|显示文字]]` 引用其他条目
-- 图片以绝对 URL 引用 Cloudflare R2：`https://cdn.example.com/img/xxx.jpg`
+- 图片以 `/img/<uuid>.ext` 引用本地图片（位于 `public/img/`）；后续上传 R2 后替换为 `https://cdn.example.com/img/<uuid>.ext`
 - 所有页面中文 (zh-CN)
 
 ## 数据模型

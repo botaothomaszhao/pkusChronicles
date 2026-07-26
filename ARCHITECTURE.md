@@ -138,8 +138,14 @@ pkuschronicles/
 
 ## 图片
 
-图片全部存放于 Cloudflare R2，正文 HTML 中以绝对 URL 引用 `https://cdn.example.com/img/xxx.jpg`。
-如果导出的 HTML 含本地路径，构建前通过脚本统一替换。
+图片来自语雀导出中的 `cdn.nlark.com` 链接，导入流程处理图片：
+
+1. **`scripts/process-html.mjs`** 在导入时自动将 `<img src="...">` 的远程图片下载到 `public/img/<uuid>.ext`
+2. 正文 HTML 中 `src` 被替换为 `/img/<uuid>.ext`（扁平存放，UUID 来自 URL 最后一段）
+3. `public/img/` 已加入 `.gitignore`，不上传 git
+4. 后续购买并配置 R2 后，上传 `public/img/` 下所有文件到 R2，编写脚本替换 HTML 中 `/img/` 为 R2 URL
+
+**清理未引用图片**：运行 `scripts/cleanup-images.mjs`（待实现），扫描所有 HTML 中 `/img/` 引用并与 `public/img/` 实际文件比对，删除未引用的文件。
 
 ## 关于切换导航的实现思路
 

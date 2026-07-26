@@ -12,6 +12,9 @@ dist/
 # Astro 缓存
 .astro/
 
+# 本地图片（导入时下载，后续上传 R2，不上传 git）
+public/img/
+
 # 编辑器
 .vscode/
 .idea/
