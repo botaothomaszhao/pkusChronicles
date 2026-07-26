@@ -475,10 +475,17 @@
     }
 }
 
+/* 图片响应式 */
+.lake-content img {
+    max-width: 100%;
+    height: auto
+}
+
 /* 图片说明文字 */
 .image-figure {
     display: block;
     width: fit-content;
+    max-width: 100%;
     margin: 16px 0
 }
 
