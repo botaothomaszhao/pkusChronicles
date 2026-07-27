@@ -1,9 +1,9 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
-import { tmpdir } from 'node:os';
-import { execSync } from 'node:child_process';
-import { pinyin } from 'pinyin';
-import { processContentHtml } from './process-html.mjs';
+import {existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+import {tmpdir} from 'node:os';
+import {execSync} from 'node:child_process';
+import {pinyin} from 'pinyin';
+import {processContentHtml} from './process-html.mjs';
 
 const ENTRIES_DIR = join(process.cwd(), 'src/content/entries');
 const DATA_FILE = join(process.cwd(), 'src/data/entries.json');
@@ -73,34 +73,37 @@ async function main() {
     process.exit(1);
   }
 
-  // read existing entries
+  // === Phase 1: 收集元数据、计算 slug ===
+
   let existingEntries = [];
   if (existsSync(DATA_FILE)) {
     existingEntries = JSON.parse(readFileSync(DATA_FILE, 'utf-8'));
   }
 
-  // build yqid → entry map for dedup
-  const yqidMap = new Map();
+  let existingTopics = [];
+  if (existsSync(TOPICS_FILE)) {
+    existingTopics = JSON.parse(readFileSync(TOPICS_FILE, 'utf-8'));
+  }
+
+  const existingYqidMap = new Map();
   for (const entry of existingEntries) {
-    if (entry.yqid) yqidMap.set(entry.yqid, entry);
+    if (entry.yqid) existingYqidMap.set(entry.yqid, entry);
   }
 
-  // ensure content dir
-  if (!existsSync(ENTRIES_DIR)) {
-    mkdirSync(ENTRIES_DIR, { recursive: true });
-  }
-
-  const newEntries = [];
-  let updatedCount = 0;
+  const usedSlugs = new Set(existingEntries.map(e => e.slug));
   const processedYqids = new Set();
   const topicDocs = [];
-  const removeEntryYqids = new Set();
+  const newEntryData = [];
+  let updatedCount = 0;
+
+  // 所有待处理 HTML 的内容（Phase 2 中处理）
+  const pendingHtml = [];
+  const staleFiles = [];
 
   for (const docMeta of docs) {
     const yuqueSlug = docMeta.slug;
     if (!yuqueSlug) continue;
 
-    // read doc body
     const docPath = join(yuqueDir, `${yuqueSlug}.json`);
     if (!existsSync(docPath)) {
       console.warn(`[警告] 找不到 ${docPath}`);
@@ -112,20 +115,27 @@ async function main() {
       console.warn(`[警告] ${yuqueSlug} body 为空`);
       continue;
     }
-    const body = await processContentHtml(bodyRaw);
 
-    // 专题文档: 标题格式为 "topic - 标题"
     const titleRaw = docMeta.title;
+
+    // 专题文档
     if (titleRaw.startsWith('topic - ')) {
       const topicTitle = titleRaw.slice(7).trim();
-      const topicSlugFromTitle = toSlug(topicTitle);
-      topicDocs.push({ yqid: yuqueSlug, slug: topicSlugFromTitle, title: topicTitle, body });
-      if (yqidMap.has(yuqueSlug)) removeEntryYqids.add(yuqueSlug);
-      console.log(`[专题] ${yuqueSlug} → ${topicSlugFromTitle}  (${topicTitle})`);
+      const topicSlug = toSlug(topicTitle);
+      topicDocs.push({ yqid: yuqueSlug, slug: topicSlug, title: topicTitle, bodyRaw });
+
+      pendingHtml.push({
+        bodyRaw,
+        filePath: join(TOPICS_DIR, `${topicSlug}.html`),
+        isTopic: true,
+      });
+
+      processedYqids.add(yuqueSlug);
+      console.log(`[专题] ${yuqueSlug} → ${topicSlug}  (${topicTitle})`);
       continue;
     }
 
-    // parse title: "日期 - 标题"
+    // 常规条目
     let date = '';
     let displayTitle = titleRaw;
     const sepIndex = titleRaw.indexOf(' - ');
@@ -138,84 +148,54 @@ async function main() {
       console.warn(`[缺少时间] ${yuqueSlug}  (${displayTitle})`);
     }
 
-    // generate slug
     const yearMatch = date.match(/\d{4}/);
     const yearPrefix = yearMatch ? yearMatch[0] : '';
     const slugBase = toSlug(displayTitle);
-    let slug = yearPrefix ? `${yearPrefix}-${slugBase}` : slugBase;
-
-    // overwrite existing entry
-    if (yqidMap.has(yuqueSlug)) {
-      const existing = yqidMap.get(yuqueSlug);
-
-      // dedup slug (exclude self)
-      const usedSlugs = new Set(existingEntries.filter(e => e !== existing).map(e => e.slug));
-      let finalSlug = slug;
-      let counter = 1;
-      while (usedSlugs.has(finalSlug)) {
-        finalSlug = yearPrefix ? `${yearPrefix}-${slugBase}-${counter}` : `${slugBase}-${counter}`;
-        counter++;
-      }
-
-      // rename file if slug changed
-      const newFile = `${finalSlug}.html`;
-      const oldPath = join(ENTRIES_DIR, existing.contentFile);
-      const newPath = join(ENTRIES_DIR, newFile);
-      if (oldPath !== newPath) {
-        if (existsSync(oldPath)) renameSync(oldPath, newPath);
-      }
-      writeFileSync(newPath, body, 'utf-8');
-
-      existing.slug = finalSlug;
-      existing.title = displayTitle;
-      existing.date = date;
-      existing.contentFile = newFile;
-      processedYqids.add(yuqueSlug);
-      console.log(`[覆盖] ${yuqueSlug} → ${finalSlug}  (${displayTitle})`);
-      updatedCount++;
-      continue;
-    }
-
-    // dedup slug among remaining entries
-    const usedSlugs = new Set([
-      ...existingEntries.map(e => e.slug),
-      ...newEntries.map(e => e.slug),
-    ]);
+    // slug 去重
+    let finalSlug = yearPrefix ? `${yearPrefix}-${slugBase}` : slugBase;
     let counter = 1;
-    let finalSlug = slug;
+    const existingEntry = existingYqidMap.get(yuqueSlug);
     while (usedSlugs.has(finalSlug)) {
-      finalSlug = yearPrefix
-        ? `${yearPrefix}-${slugBase}-${counter}`
-        : `${slugBase}-${counter}`;
+      if (existingEntry && existingEntry.slug === finalSlug) break;
+      finalSlug = yearPrefix ? `${yearPrefix}-${slugBase}-${counter}` : `${slugBase}-${counter}`;
       counter++;
     }
+    usedSlugs.add(finalSlug);
 
-    // write content file
-    writeFileSync(join(ENTRIES_DIR, `${finalSlug}.html`), body, 'utf-8');
-
-    const entry = {
-      slug: finalSlug,
-      title: displayTitle,
-      date,
-      contentFile: `${finalSlug}.html`,
-      yqid: yuqueSlug,
-    };
-    processedYqids.add(yuqueSlug);
-    newEntries.push(entry);
-    console.log(`[新增] ${yuqueSlug} → ${finalSlug}  (${displayTitle})`);
-  }
-
-  // 移除转为专题的旧条目
-  if (removeEntryYqids.size > 0) {
-    for (const yqid of removeEntryYqids) {
-      const entry = yqidMap.get(yqid);
-      const entryPath = join(ENTRIES_DIR, entry.contentFile);
-      if (existsSync(entryPath)) rmSync(entryPath);
+    if (existingEntry) {
+      // 覆盖已有条目
+      const newFile = `${finalSlug}.html`;
+      if (existingEntry.contentFile && existingEntry.contentFile !== newFile) {
+        staleFiles.push(join(ENTRIES_DIR, existingEntry.contentFile));
+      }
+      existingEntry.slug = finalSlug;
+      existingEntry.title = displayTitle;
+      existingEntry.date = date;
+      existingEntry.contentFile = newFile;
+      processedYqids.add(yuqueSlug);
+      updatedCount++;
+      console.log(`[覆盖] ${yuqueSlug} → ${finalSlug}  (${displayTitle})`);
+    } else {
+      newEntryData.push({
+        yqid: yuqueSlug,
+        slug: finalSlug,
+        title: displayTitle,
+        date,
+        contentFile: `${finalSlug}.html`,
+      });
+      processedYqids.add(yuqueSlug);
+      console.log(`[新增] ${yuqueSlug} → ${finalSlug}  (${displayTitle})`);
     }
-    existingEntries = existingEntries.filter(e => !removeEntryYqids.has(e.yqid));
+
+    pendingHtml.push({
+      bodyRaw,
+      filePath: join(ENTRIES_DIR, `${finalSlug}.html`),
+      isTopic: false,
+    });
   }
 
-  // merge & sort by date（同 date 保持相对顺序，稳定排序）
+  // === 写入 entries.json ===
+
   function compareDate(a, b) {
     const pa = a.date.split('.').map(Number);
     const pb = b.date.split('.').map(Number);
@@ -227,29 +207,28 @@ async function main() {
     }
     return 0;
   }
-  const merged = [...existingEntries, ...newEntries];
+  const merged = [...existingEntries, ...newEntryData];
   merged.sort(compareDate);
   writeFileSync(DATA_FILE, JSON.stringify(merged, null, 2) + '\n', 'utf-8');
-  const added = newEntries.length;
-  console.log(`\n完成: ${existingEntries.length} 已有 (${updatedCount} 覆盖) + ${added} 新增 = ${merged.length} 总计`);
+  console.log(`\n完成: ${existingEntries.length} 已有 (${updatedCount} 覆盖) + ${newEntryData.length} 新增 = ${merged.length} 总计`);
 
-  // 处理专题
+  // === 写入 topics.json ===
+
+  const yqidDate = new Map();
+  for (const e of merged) if (e.yqid) yqidDate.set(e.yqid, e.date);
+
   const hasTopicWork = topicDocs.length > 0 || (topicSlug && processedYqids.size > 0);
   if (hasTopicWork) {
-    let topics = [];
-    if (existsSync(TOPICS_FILE)) {
-      topics = JSON.parse(readFileSync(TOPICS_FILE, 'utf-8'));
-    }
-    if (!existsSync(TOPICS_DIR)) mkdirSync(TOPICS_DIR, { recursive: true });
+    let topics = [...existingTopics];
+    const modifiedTopics = new Set();
+    if (topicDocs.length > 0 && !existsSync(TOPICS_DIR)) mkdirSync(TOPICS_DIR, { recursive: true });
 
-    // 处理本次导入的专题文档
     for (let i = 0; i < topicDocs.length; i++) {
       const td = topicDocs[i];
       const isFirstForArg = topicSlug && i === 0;
       const targetSlug = isFirstForArg ? topicSlug : td.slug;
       const descFile = `${targetSlug}.html`;
 
-      // 先按 yqid 查找，再按 slug 查找
       let topic = topics.find(t => t.yqid === td.yqid);
       if (!topic) topic = topics.find(t => t.slug === targetSlug);
 
@@ -262,12 +241,16 @@ async function main() {
         topic = { slug: targetSlug, title: td.title, descriptionFile: descFile, entries: [], yqid: td.yqid };
         topics.push(topic);
       }
+      modifiedTopics.add(topic);
 
-      writeFileSync(join(TOPICS_DIR, descFile), td.body, 'utf-8');
+      // 修正专题描述文件路径
+      const descPath = join(TOPICS_DIR, descFile);
+      const pendingIdx = pendingHtml.findIndex(p => p.isTopic && p.bodyRaw === td.bodyRaw);
+      if (pendingIdx !== -1) pendingHtml[pendingIdx].filePath = descPath;
+
       console.log(`[专题${isFirstForArg ? '描述' : ''}] ${targetSlug}: ${td.title}`);
     }
 
-    // 将条目 yqid 加入 --topic 专题
     if (topicSlug && processedYqids.size > 0) {
       let topic = topics.find(t => t.slug === topicSlug);
       if (!topic) {
@@ -277,6 +260,7 @@ async function main() {
         topic = { slug: topicSlug, title: topicSlug, descriptionFile: descFile, entries: [] };
         topics.push(topic);
       }
+      modifiedTopics.add(topic);
       let addedCount = 0;
       for (const entry of merged) {
         const yqid = entry.yqid;
@@ -288,7 +272,31 @@ async function main() {
       console.log(`[专题] ${topicSlug}: 添加 ${addedCount} 个条目`);
     }
 
+    // 仅对本次有改动的专题重排
+    for (const topic of modifiedTopics) {
+      topic.entries.sort((a, b) => compareDate(
+        { date: yqidDate.get(a) ?? '' },
+        { date: yqidDate.get(b) ?? '' }
+      ));
+    }
+
     writeFileSync(TOPICS_FILE, JSON.stringify(topics, null, 2) + '\n', 'utf-8');
+  }
+
+  // === Phase 2: 处理 HTML，写入内容文件 ===
+
+  if (pendingHtml.some(p => !p.isTopic) && !existsSync(ENTRIES_DIR)) {
+    mkdirSync(ENTRIES_DIR, { recursive: true });
+  }
+
+  for (const { bodyRaw, filePath } of pendingHtml) {
+    const body = await processContentHtml(bodyRaw);
+    writeFileSync(filePath, body, 'utf-8');
+  }
+
+  // 清理因覆盖（slug 变更）而废弃的旧文件
+  for (const f of staleFiles) {
+    if (existsSync(f)) rmSync(f);
   }
 }
 
