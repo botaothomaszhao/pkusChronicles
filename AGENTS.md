@@ -18,6 +18,7 @@ npm run preview  # 预览构建结果
 ```bash
 node scripts/yuque-import.mjs [--topic <slug>] <语雀导出目录>   # 导入语雀知识库到 entries ，自动下载图片到 public/img/ 并替换 src
 node scripts/process-html.mjs                        # HTML 处理管线（被 import 调用，也可独立使用）
+node scripts/cleanup-images.mjs                    # 清理 public/img/ 中未被任何 HTML 引用的图片
 ```
 
 ## 项目结构

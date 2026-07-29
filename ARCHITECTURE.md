@@ -145,7 +145,7 @@ pkuschronicles/
 3. `public/img/` 已加入 `.gitignore`，不上传 git
 4. 后续购买并配置 R2 后，上传 `public/img/` 下所有文件到 R2，编写脚本替换 HTML 中 `/img/` 为 R2 URL
 
-**清理未引用图片**：运行 `scripts/cleanup-images.mjs`（待实现），扫描所有 HTML 中 `/img/` 引用并与 `public/img/` 实际文件比对，删除未引用的文件。
+**清理未引用图片**：运行 `node scripts/cleanup-images.mjs`，扫描所有 HTML 中 `/img/` 引用并与 `public/img/` 实际文件比对，删除未引用的文件。
 
 ## 关于切换导航的实现思路
 
