@@ -17,7 +17,7 @@ npm run preview  # 预览构建结果
 
 ```bash
 node scripts/yuque-import.mjs [--topic <slug>] <语雀导出目录>   # 导入语雀知识库到 entries ，自动下载图片到 public/img/ 并替换 src
-node scripts/process-html.mjs                        # HTML 处理管线（被 import 调用，也可独立使用）
+node scripts/process-html.mjs [<文件/目录路径>] # 独立运行处理管线，参数为 .html 文件或含 .html 文件的目录（递归）
 node scripts/cleanup-images.mjs                    # 清理 public/img/ 中未被任何 HTML 引用的图片
 ```
 
@@ -30,7 +30,8 @@ node scripts/cleanup-images.mjs                    # 清理 public/img/ 中未�
 - `src/lib/wiki-parser.ts` — `[[slug]]` / `[[slug|text]]` wiki 链接解析与渲染
 - `src/lib/backlinks.ts` — 构建时反向引用计算（目前 `content` 读取为空，待修复）
 - `scripts/yuque-import.mjs` — 从语雀导出目录导入条目，自动下载图片到 `public/img/` 并替换 HTML 中的 src
-- `scripts/process-html.mjs` — HTML 处理管线（图片下载、后续注释格式等其他转换）
+- `scripts/process-html.mjs` — HTML 处理管线（图片下载、后续注释格式等其他转换），被 `yuque-import.mjs` 调用，也可独立运行
+- `scripts/cleanup-images.mjs` — 清理 `public/img/` 中未被任何 HTML 引用的图片
 - `public/img/` — 导入时下载的本地图片（`.gitignore` 中排除，不上传 git）
 - `ARCHITECTURE.md` — 详尽的架构文档，数据处理和路由逻辑以它为参考
 - `TODO.md` — 待办事项列表，面向开发者，没有提到时无需关注

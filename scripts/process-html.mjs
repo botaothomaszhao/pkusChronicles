@@ -1,5 +1,6 @@
-import {writeFileSync, existsSync, mkdirSync, readFileSync} from 'node:fs';
-import {join} from 'node:path';
+import {writeFileSync, existsSync, mkdirSync, readFileSync, statSync, readdirSync} from 'node:fs';
+import {join, extname, resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
 
 const IMG_DIR = join(process.cwd(), 'public/img');
 
@@ -83,6 +84,26 @@ export async function processContentHtml(body) {
         }
     );
 
+    // 3. 将 Markdown 脚注 [^x] / [^x]: 转换为 HTML 角标
+    // 将连续定义段落合并为 <ol class="footnotes-list">
+    result = result.replace(
+        /(<p[^>]*><span class="ne-text">\[\^(\d+)]: [\s\S]*?<\/p>\s*)+/gi,
+        (match) => {
+            const items = match.replace(
+                /<p[^>]*><span class="ne-text">\[\^(\d+)]: ([\s\S]*?)<\/span>([\s\S]*?)<\/p>/gi,
+                (m, num, spanContent, rest) =>
+                    `<li id="fn-${num}"><a href="#fnref-${num}" class="fn-back">↩</a> ${spanContent}${rest.trim()}</li>`
+            );
+            return `<ol class="footnotes-list">\n${items.trim()}\n</ol>`;
+        }
+    );
+    // 再处理行内引用
+    result = result.replace(
+        /\[\^(\d+)\]/g,
+        (match, num) =>
+            `<sup class="fn-ref"><a href="#fn-${num}" id="fnref-${num}">${num}</a></sup>`
+    );
+
     // 4. 将语雀链接转换为站内链接
     // 先统一引号为双引号
     result = result.replace(
@@ -101,4 +122,56 @@ export async function processContentHtml(body) {
     );
 
     return result;
+}
+
+// CLI 入口：直接运行时处理指定路径的 HTML 文件
+const __filename = fileURLToPath(import.meta.url);
+if (process.argv[1] && resolve(process.argv[1]) === __filename) {
+    (async () => {
+        const target = process.argv[2];
+        if (!target) {
+            console.error('用法: node scripts/process-html.mjs <文件或目录路径>');
+            process.exit(1);
+        }
+
+        const absTarget = resolve(target);
+        const files = [];
+        const st = statSync(absTarget);
+        if (st.isFile()) {
+            if (extname(absTarget).toLowerCase() !== '.html') {
+                console.error('错误: 仅支持 .html 文件');
+                process.exit(1);
+            }
+            files.push(absTarget);
+        } else if (st.isDirectory()) {
+            const all = readdirSync(absTarget, {recursive: true});
+            for (const entry of all) {
+                if (extname(entry).toLowerCase() === '.html') {
+                    files.push(join(absTarget, entry));
+                }
+            }
+        } else {
+            console.error('错误: 无效路径');
+            process.exit(1);
+        }
+
+        if (files.length === 0) {
+            console.error('未找到 HTML 文件');
+            process.exit(1);
+        }
+
+        let success = 0;
+        for (const file of files) {
+            try {
+                const body = readFileSync(file, 'utf-8');
+                const result = await processContentHtml(body);
+                writeFileSync(file, result, 'utf-8');
+                success++;
+                console.log(`✓ ${file}`);
+            } catch (err) {
+                console.error(`✗ ${file}: ${err.message}`);
+            }
+        }
+        console.log(`\n处理完成: ${success}/${files.length}`);
+    })();
 }
