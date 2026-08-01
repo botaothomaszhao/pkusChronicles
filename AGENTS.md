@@ -27,8 +27,7 @@ node scripts/cleanup-images.mjs                    # 清理 public/img/ 中未�
 - `src/data/topics.json` — 专题定义
 - `src/content/entries/*.html` — 条目正文（纯 HTML，非 Markdown）
 - `src/content/topics/*.html` — 专题说明（纯 HTML）
-- `src/lib/wiki-parser.ts` — `[[slug]]` / `[[slug|text]]` wiki 链接解析与渲染
-- `src/lib/backlinks.ts` — 构建时反向引用计算（目前 `content` 读取为空，待修复）
+- `src/lib/backlinks.ts` — 构建时反向引用计算（统计 entry 正文与 topic 描述 HTML 中的站内链接）
 - `scripts/yuque-import.mjs` — 从语雀导出目录导入条目，自动下载图片到 `public/img/` 并替换 HTML 中的 src
 - `scripts/process-html.mjs` — HTML 处理管线（图片下载、后续注释格式等其他转换），被 `yuque-import.mjs` 调用，也可独立运行
 - `scripts/cleanup-images.mjs` — 清理 `public/img/` 中未被任何 HTML 引用的图片
@@ -42,7 +41,7 @@ node scripts/cleanup-images.mjs                    # 清理 public/img/ 中未�
 
 ## 内容约定
 
-- 条目正文 HTML 中使用 `[[slug]]` 或 `[[slug|显示文字]]` 引用其他条目
+- 条目正文 HTML 中使用 `<a href="/entry/<slug>">` 或 `<a href="/topic/<slug>">` 引用其他页面
 - 图片以 `/img/<uuid>.ext` 引用本地图片（位于 `public/img/`）；后续上传 R2 后替换为 `https://cdn.example.com/img/<uuid>.ext`
 - 所有页面中文 (zh-CN)
 

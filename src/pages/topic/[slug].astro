@@ -4,6 +4,7 @@ import path from 'node:path';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import entries from '../../data/entries.json';
 import topics from '../../data/topics.json';
+import { buildBacklinks } from '@/lib/backlinks.ts';
 
 export async function getStaticPaths() {
     return topics.map((topic) => ({
@@ -23,6 +24,8 @@ if (fs.existsSync(descPath)) {
 const topicEntries = topic.entries
     .map((id) => entries.find((e) => e.yqid === id || e.slug === id))
     .filter((e): e is NonNullable<typeof e> => e != null);
+
+const backlinks = buildBacklinks(entries, topics).get(`topic:${topic.slug}`) || [];
 ---
 
 <BaseLayout title={topic.title}>
@@ -39,5 +42,18 @@ const topicEntries = topic.entries
                 <a href={`/entry/${entry.slug}`}>{entry.title}</a>
             </article>
     ))}
+
+    {backlinks.length > 0 && (
+        <section>
+            <h2>引用</h2>
+            <ul>
+                {backlinks.map((src) => (
+                    <li>
+                        <a href={`/${src.type}/${src.slug}`}>{src.title}</a>
+                    </li>
+                ))}
+            </ul>
+        </section>
+    )}
 
 </BaseLayout>

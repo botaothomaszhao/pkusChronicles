@@ -81,18 +81,20 @@ Backlink {
 ## 引用系统
 
 ### 写法
-条目正文 HTML 中使用 wiki 链接语法：
+正文 HTML 中通过站内链接引用其他页面（由 `scripts/process-html.mjs` 从语雀链接转换生成，也可手写）：
 ```html
-<p>这一年发生的事情，参考了[[1930-kuojian|1930年的扩建计划]]。</p>
+<p>这一年发生的事情，参考了<a href="/entry/1930-kuojian">1930年的扩建计划</a>。</p>
 ```
 
-- `[[slug]]` → 渲染为链向 `/entry/slug` 的超链接，显示目标条目标题
-- `[[slug|自定义文字]]` → 显示自定义文字
+- `href="/entry/<slug>"` → 引用条目
+- `href="/topic/<slug>"` → 引用专题
+- 引用目标同时支持条目与专题，后续新增页面类别只需扩展 `src/lib/backlinks.ts` 的类别前缀
 
 ### 构建时处理
-1. 解析所有条目 HTML 中的 `[[...]]`，提取引用关系
-2. 生成反向索引：`backlinks: { [slug]: string[] }` — 每个条目被哪些条目引用
-3. 条目详情页底部渲染"被以下页面引用"列表
+1. 解析 `src/content/entries/*.html` 与 `src/content/topics/*.html` 中的站内链接，提取引用关系
+2. 生成反向索引：`"entry:<slug>" / "topic:<slug>" → 来源列表[{type, slug, title}]` — 每个页面被哪些正文提及
+3. 仅统计正文 HTML；页眉页脚、专题条目列表、所属专题等模板生成的链接不参与计算
+4. 条目详情页与专题详情页底部渲染"引用"列表
 
 ## 数据文件
 
@@ -128,8 +130,7 @@ pkuschronicles/
 │   │       ├── index.astro     # 专题列表
 │   │       └── [slug].astro    # 专题详情页
 │   ├── lib/
-│   │   ├── backlinks.ts        # 构建时计算反向引用
-│   │   └── wiki-parser.ts      # [[wiki link]] → <a> 转换
+│   │   └── backlinks.ts        # 构建时计算反向引用
 │   └── layouts/
 │       └── BaseLayout.astro
 ├── astro.config.mjs
@@ -153,6 +154,6 @@ pkuschronicles/
 
 - `prevInTimeline` / `nextInTimeline`：entries.json 中按数组索引确定的相邻条目
 - `topicContexts: Array<{ topic, prevEntry, nextEntry }>`：遍历 topics，找到该条目所属的各专题及专题内前后条目
-- `backlinks: string[]`：从预生成的反向索引查
+- `backlinks`：调用 `buildBacklinks()` 从反向索引查（entry 页查 `entry:<slug>`，topic 页查 `topic:<slug>`）
 
 所有数据在构建时即确定，运行时零开销。

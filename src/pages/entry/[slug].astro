@@ -4,7 +4,7 @@ import path from 'node:path';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import entries from '../../data/entries.json';
 import topics from '../../data/topics.json';
-import { renderWikiLinks } from '@/lib/wiki-parser.ts';
+import { buildBacklinks } from '@/lib/backlinks.ts';
 
 export async function getStaticPaths() {
   return entries.map((entry) => ({
@@ -14,14 +14,14 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
-const entryMap = Object.fromEntries(entries.map((e) => [e.slug, e]));
 
 const contentPath = path.resolve('src/content/entries', entry.contentFile);
 let contentHtml = '';
 if (fs.existsSync(contentPath)) {
-  const raw = fs.readFileSync(contentPath, 'utf-8');
-  contentHtml = renderWikiLinks(raw, (slug) => entryMap[slug]?.title || slug);
+  contentHtml = fs.readFileSync(contentPath, 'utf-8');
 }
+
+const backlinks = buildBacklinks(entries, topics).get(`entry:${entry.slug}`) || [];
 
 const entryId = entry.yqid || entry.slug;
 const findEntry = (id: string) => entries.find((e) => e.yqid === id || e.slug === id);
@@ -50,6 +50,18 @@ const nextInTimeline = entryIdx < entries.length - 1 ? entries[entryIdx + 1] : n
     <Fragment set:html={contentHtml} />
   </div>
   <br>
+  {backlinks.length > 0 && (
+    <section>
+      <h2>引用</h2>
+      <ul>
+        {backlinks.map((src) => (
+          <li>
+            <a href={`/${src.type}/${src.slug}`}>{src.title}</a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
   <div class="entry-nav">
     <span>
       {prevInTimeline && <a href={`/entry/${prevInTimeline.slug}`}>← {prevInTimeline.title}</a>}
