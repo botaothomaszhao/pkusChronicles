@@ -48,8 +48,14 @@ export async function processContentHtml(body) {
 
         const urlToLocal = new Map();
         for (const src of srcs) {
-            const filename = src.split('/').pop();
+            let filename;
+            try {
+                filename = new URL(src).pathname.split('/').pop() || '';
+            } catch {
+                filename = src.split('/').pop() || '';
+            }
             if (!filename) continue;
+            filename = decodeURIComponent(filename);
             const localPath = join(IMG_DIR, filename);
 
             if (!existsSync(localPath)) {

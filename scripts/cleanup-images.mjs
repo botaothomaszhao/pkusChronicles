@@ -15,7 +15,7 @@ function main() {
 
   // 收集所有 HTML 中引用的图片文件名
   const referenced = new Set();
-  const imgRefRegex = /\/img\/([\w.-]+)/g;
+  const imgRefRegex = /\/img\/([^"'\s<>]+)/g;
   for (const dir of CONTENT_DIRS) {
     if (!existsSync(dir)) continue;
     for (const file of readdirSync(dir)) {
