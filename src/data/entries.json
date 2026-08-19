@@ -84,6 +84,27 @@
     "yqid": "gf987r8my5htw5zg"
   },
   {
+    "yqid": "rmbpgwrxe9v5n72u",
+    "slug": "2010-shou-jie-gai-ge-she-li-dan-yuan-zhi-dao-shi-zhi-deng-shi-gong-ing",
+    "title": "首届改革设立单元制、导师制等（施工ing）",
+    "date": "2010.9",
+    "contentFile": "2010-shou-jie-gai-ge-she-li-dan-yuan-zhi-dao-shi-zhi-deng-shi-gong-ing.html"
+  },
+  {
+    "yqid": "lch83xwx3qyfbzeu",
+    "slug": "2012-she-li-xue-yuan-zhi",
+    "title": "设立学院制",
+    "date": "2012.6",
+    "contentFile": "2012-she-li-xue-yuan-zhi.html"
+  },
+  {
+    "yqid": "th09yg4es038g7xg",
+    "slug": "2013-dan-yuan-gai-wei-shu-yuan",
+    "title": "单元改为书院",
+    "date": "2013",
+    "contentFile": "2013-dan-yuan-gai-wei-shu-yuan.html"
+  },
+  {
     "yqid": "wby5mnh445d7m4ed",
     "slug": "2013-jiu-ti-yu-guan-chai-chu",
     "title": "旧体育馆拆除",
@@ -98,11 +119,25 @@
     "yqid": "gxkpxw1wf5zcnnv6"
   },
   {
+    "yqid": "lgkruhgymmn5w24u",
+    "slug": "2016-cheng-li-xi-jing-shu-yuan",
+    "title": "成立熙敬书院",
+    "date": "2016",
+    "contentFile": "2016-cheng-li-xi-jing-shu-yuan.html"
+  },
+  {
     "slug": "2016-xin-jian-ti-yu-guan-luo-cheng",
     "title": "欣健体育馆落成",
     "date": "2016.12",
     "contentFile": "2016-xin-jian-ti-yu-guan-luo-cheng.html",
     "yqid": "woxxsadm8vgmy6da"
+  },
+  {
+    "yqid": "dk1wgn03rrz0rtv7",
+    "slug": "2018-chu-zhong-bu-jia-ru-yuan-pei-xiang-mu",
+    "title": "初中部加入元培项目",
+    "date": "2018",
+    "contentFile": "2018-chu-zhong-bu-jia-ru-yuan-pei-xiang-mu.html"
   },
   {
     "slug": "2018-xiao-yuan-jing-guan-gai-zao-wan-cheng",
@@ -119,6 +154,27 @@
     "contentFile": "2018-ti-yu-guan-er-qi-ji-zong-he-lou-zheng-shou-qi-dong-xu-bu-tu.html"
   },
   {
+    "yqid": "tffw5y444nywtfua",
+    "slug": "2019-gao-kao-zhu-ke-hui-gui-xie-zuo-zhong-xin-qu-xiao",
+    "title": "高考主科回归，写作中心取消",
+    "date": "2019.9",
+    "contentFile": "2019-gao-kao-zhu-ke-hui-gui-xie-zuo-zhong-xin-qu-xiao.html"
+  },
+  {
+    "yqid": "mtiaxi3pvgf35oim",
+    "slug": "2020-cheng-li-hong-yi-shu-yuan",
+    "title": "成立弘毅书院",
+    "date": "2020.8",
+    "contentFile": "2020-cheng-li-hong-yi-shu-yuan.html"
+  },
+  {
+    "yqid": "unfugsed2mqbtknp",
+    "slug": "2021-cheng-li-wei-ming-xue-yuan",
+    "title": "成立未名学院",
+    "date": "2021.2",
+    "contentFile": "2021-cheng-li-wei-ming-xue-yuan.html"
+  },
+  {
     "slug": "2021-wang-zheng-bei-mian-zhi",
     "title": "王铮被免职",
     "date": "2021.12.14",
@@ -131,6 +187,13 @@
     "date": "2022.3.15",
     "contentFile": "2022-ma-yu-guo-ren-xiao-chang.html",
     "yqid": "rwhshgc21giywdm9"
+  },
+  {
+    "yqid": "ulcd062olgivsqui",
+    "slug": "2022-shu-yuan-gui-ru-xue-yuan-guan-li-xin-xi-dai-bu",
+    "title": "书院归入学院管理（信息待补）",
+    "date": "2022.9",
+    "contentFile": "2022-shu-yuan-gui-ru-xue-yuan-guan-li-xin-xi-dai-bu.html"
   },
   {
     "slug": "2023-hua-yuan-ji-yu-guo-chi-luo-cheng",
@@ -180,5 +243,12 @@
     "title": "北墙边展板更换（待考）",
     "date": "2026.6",
     "contentFile": "2026-bei-qiang-bian-zhan-ban-geng-huan-dai-kao.html"
+  },
+  {
+    "yqid": "fytuabh1wr7mpbi5",
+    "slug": "2026-dong-qiang-chai-chu-lao-zhao-pian-dai-bu",
+    "title": "东墙拆除（老照片待补）",
+    "date": "2026.8.16",
+    "contentFile": "2026-dong-qiang-chai-chu-lao-zhao-pian-dai-bu.html"
   }
 ]
