@@ -23,7 +23,7 @@ npm run r2-sync                                   # 以 public/img/ 为准同步
 npm run deploy                                    # build + r2-deploy + wrangler deploy
 ```
 
-环境变量在 `.env`（已 gitignore）中配置，模板见 `.env.example`。`deploy`/`r2-sync` 使用 `--env-file-if-exists`，无 `.env` 也能运行：缺私有凭证时 `r2-deploy` 跳过同步，`R2_PUBLIC_URL` 为公开地址、脚本内置默认值，可被环境变量覆盖。
+环境变量在 `.env`（已 gitignore）中配置，模板见 `.env.example`。`r2-sync` 使用 `--env-file-if-exists`，无 `.env` 也能运行；`R2_PUBLIC_URL` 为公开地址、`r2-deploy` 内置默认值，可被环境变量覆盖。
 
 ## 项目结构
 
@@ -36,7 +36,7 @@ npm run deploy                                    # build + r2-deploy + wrangler
 - `scripts/process-html.mjs` — HTML 处理管线（图片下载、后续注释格式等其他转换），被 `yuque-import.mjs` 调用，也可独立运行
 - `scripts/cleanup-images.mjs` — 清理 `public/img/` 中未被任何 HTML 引用的图片
 - `scripts/r2-sync.mjs` — 以 `public/img/` 为事实来源单向同步图片到 R2（上传/删除），凭证来自 `.env`
-- `scripts/r2-deploy.mjs` — build 后运行：同步 R2 + 删除 `dist/img/` + 将 dist 中 HTML 的 `/img/` 替换为 R2 公网 URL
+- `scripts/r2-deploy.mjs` — build 后运行：删除 `dist/img/` + 将 dist 中 HTML 的 `/img/` 替换为 R2 公网 URL（不做同步）
 - `public/img/` — 导入时下载的本地图片（`.gitignore` 中排除，不上传 git），本地唯一留存
 - `ARCHITECTURE.md` — 详尽的架构文档，数据处理和路由逻辑以它为参考
 - `TODO.md` — 待办事项列表，面向开发者，没有提到时无需关注

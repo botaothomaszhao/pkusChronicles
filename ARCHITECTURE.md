@@ -101,7 +101,7 @@ Backlink {
 项目中的脚本会读取根目录 `.env`，其中包含导入/部署所需变量：
 
 - `YUQUE_BASE_URL`：语雀文档原始链接前缀。
-- `R2_ENDPOINT`、`R2_ACCESS_KEY_ID`、`R2_SECRET_ACCESS_KEY`、`R2_PUBLIC_URL`：用于 `scripts/r2-sync.mjs` 与 `scripts/r2-deploy.mjs` 同步图片到 Cloudflare R2，并把构建产物中的 `/img/...` 替换为公网 URL
+- `R2_ENDPOINT`、`R2_ACCESS_KEY_ID`、`R2_SECRET_ACCESS_KEY`：用于 `scripts/r2-sync.mjs` 同步图片到 Cloudflare R2；`R2_PUBLIC_URL` 用于 `scripts/r2-deploy.mjs` 把构建产物中的 `/img/...` 替换为公网 URL
 
 脚本统一使用 `node --env-file=.env ...` 运行，或者用 `npm run yuque-import -- ...` / `npm run process-html -- ...` 这类包装命令。
 
@@ -157,11 +157,11 @@ pkuschronicles/
 **R2 存储**：图片通过 Cloudflare R2 提供线上访问，本地 `public/img/` 为唯一事实来源，单向同步到 R2：
 
 - **`scripts/r2-sync.mjs`** 用 S3 兼容 API（`@aws-sdk/client-s3`）同步：上传本地存在但 R2 缺失或大小不同的文件，删除 R2 存在但本地缺失的对象（即本地清理未引用图片后，线上同步删除）
-- **`scripts/r2-deploy.mjs`** 在 `npm run build` 后运行：先执行同步，再删除 `dist/img/`（图片不再随站点体积发布），并将 `dist/` 下所有 HTML 中的 `/img/<file>` 替换为 `https://r2.pkuschronicles.com/<file>`
+- **`scripts/r2-deploy.mjs`** 在 `npm run build` 后运行：删除 `dist/img/`（图片不再随站点体积发布），并将 `dist/` 下所有 HTML 中的 `/img/<file>` 替换为 `https://r2.pkuschronicles.com/<file>`；不做同步
 - 源码正文 HTML 始终使用 `/img/<uuid>.ext`，仅构建产物指向 R2 公网地址
-- R2 凭证与环境变量见 `.env.example`（复制为 `.env` 填写，已 gitignore）。`R2_PUBLIC_URL` 为公开地址，脚本内置默认值，可被环境变量覆盖；`deploy`/`r2-sync` 用 `--env-file-if-exists` 加载，缺私有凭证时 `r2-deploy` 跳过同步，仅处理 dist
+- R2 凭证与环境变量见 `.env.example`（复制为 `.env` 填写，已 gitignore）。`R2_PUBLIC_URL` 为公开地址、`r2-deploy` 内置默认值，可被环境变量覆盖；`r2-sync` 用 `--env-file-if-exists` 加载，无 `.env` 也能运行（同步图片需在本地或 CI 单独执行 `npm run r2-sync`）
 
-**清理未引用图片**：运行 `node scripts/cleanup-images.mjs`，扫描所有 HTML 中 `/img/` 引用并与 `public/img/` 实际文件比对，删除未引用的文件。清理后执行 `npm run r2:sync` 即可让线上同步删除。
+**清理未引用图片**：运行 `node scripts/cleanup-images.mjs`，扫描所有 HTML 中 `/img/` 引用并与 `public/img/` 实际文件比对，删除未引用的文件。清理后执行 `npm run r2-sync` 即可让线上同步删除。
 
 **部署**：`npm run deploy`（= build + r2 同步与替换 + wrangler deploy）。
 
