@@ -96,6 +96,15 @@ Backlink {
 3. 仅统计正文 HTML；页眉页脚、专题条目列表、所属专题等模板生成的链接不参与计算
 4. 条目详情页与专题详情页底部渲染"引用"列表
 
+## 环境变量与脚本配置
+
+项目中的脚本会读取根目录 `.env`，其中包含导入/部署所需变量：
+
+- `YUQUE_BASE_URL`：语雀文档原始链接前缀。
+- `R2_ENDPOINT`、`R2_ACCESS_KEY_ID`、`R2_SECRET_ACCESS_KEY`、`R2_PUBLIC_URL`：用于 `scripts/r2-sync.mjs` 与 `scripts/r2-deploy.mjs` 同步图片到 Cloudflare R2，并把构建产物中的 `/img/...` 替换为公网 URL
+
+脚本统一使用 `node --env-file=.env ...` 运行，或者用 `npm run yuque-import -- ...` / `npm run process-html -- ...` 这类包装命令。
+
 ## 数据文件
 
 ```
@@ -143,10 +152,18 @@ pkuschronicles/
 
 1. **`scripts/process-html.mjs`** 在导入时自动将 `<img src="...">` 的远程图片下载到 `public/img/<uuid>.ext`
 2. 正文 HTML 中 `src` 被替换为 `/img/<uuid>.ext`（扁平存放，UUID 来自 URL 最后一段）
-3. `public/img/` 已加入 `.gitignore`，不上传 git
-4. 后续购买并配置 R2 后，上传 `public/img/` 下所有文件到 R2，编写脚本替换 HTML 中 `/img/` 为 R2 URL
+3. `public/img/` 已加入 `.gitignore`，不上传 git，仅本地留存
 
-**清理未引用图片**：运行 `node scripts/cleanup-images.mjs`，扫描所有 HTML 中 `/img/` 引用并与 `public/img/` 实际文件比对，删除未引用的文件。
+**R2 存储**：图片通过 Cloudflare R2 提供线上访问，本地 `public/img/` 为唯一事实来源，单向同步到 R2：
+
+- **`scripts/r2-sync.mjs`** 用 S3 兼容 API（`@aws-sdk/client-s3`）同步：上传本地存在但 R2 缺失或大小不同的文件，删除 R2 存在但本地缺失的对象（即本地清理未引用图片后，线上同步删除）
+- **`scripts/r2-deploy.mjs`** 在 `npm run build` 后运行：先执行同步，再删除 `dist/img/`（图片不再随站点体积发布），并将 `dist/` 下所有 HTML 中的 `/img/<file>` 替换为 `https://r2.pkuschronicles.com/<file>`
+- 源码正文 HTML 始终使用 `/img/<uuid>.ext`，仅构建产物指向 R2 公网地址
+- R2 凭证与环境变量见 `.env.example`（复制为 `.env` 填写，已 gitignore）
+
+**清理未引用图片**：运行 `node scripts/cleanup-images.mjs`，扫描所有 HTML 中 `/img/` 引用并与 `public/img/` 实际文件比对，删除未引用的文件。清理后执行 `npm run r2:sync` 即可让线上同步删除。
+
+**部署**：`npm run deploy`（= build + r2 同步与替换 + wrangler deploy）。
 
 ## 关于切换导航的实现思路
 

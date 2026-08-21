@@ -16,10 +16,15 @@ npm run preview  # 预览构建结果
 无 lint / typecheck / test 脚本。提交前手动 `npm run build` 确认无报错。
 
 ```bash
-node scripts/yuque-import.mjs [--topic <slug>] <语雀导出目录>   # 导入语雀知识库到 entries ，自动下载图片到 public/img/ 并替换 src
-node scripts/process-html.mjs [<文件/目录路径>] # 独立运行处理管线，参数为 .html 文件或含 .html 文件的目录（递归）
-node scripts/cleanup-images.mjs                    # 清理 public/img/ 中未被任何 HTML 引用的图片
+npm run yuque-import -- [--topic <slug>] <语雀导出目录>   # 直接运行导入脚本
+npm run process-html -- [<文件/目录路径>] # 独立运行处理管线，参数为 .html 文件或含 .html 文件的目录（递归）
+npm run cleanup-images                            # 清理 public/img/ 中未被任何 HTML 引用的图片
+npm run r2-sync                                   # 以 public/img/ 为准同步图片到 R2（上传缺失/变更，删除 R2 多余对象）
+npm run r2-deploy                                 # build 后运行：同步 R2 + 删除 dist/img + 将 dist HTML 的 /img/ 替换为 R2 公网 URL
+npm run deploy                                    # build + r2-deploy + wrangler deploy
 ```
+
+环境变量在 `.env`（已 gitignore）中配置，模板见 `.env.example`。
 
 ## 项目结构
 
@@ -31,7 +36,9 @@ node scripts/cleanup-images.mjs                    # 清理 public/img/ 中未�
 - `scripts/yuque-import.mjs` — 从语雀导出目录导入条目，自动下载图片到 `public/img/` 并替换 HTML 中的 src
 - `scripts/process-html.mjs` — HTML 处理管线（图片下载、后续注释格式等其他转换），被 `yuque-import.mjs` 调用，也可独立运行
 - `scripts/cleanup-images.mjs` — 清理 `public/img/` 中未被任何 HTML 引用的图片
-- `public/img/` — 导入时下载的本地图片（`.gitignore` 中排除，不上传 git）
+- `scripts/r2-sync.mjs` — 以 `public/img/` 为事实来源单向同步图片到 R2（上传/删除），凭证来自 `.env`
+- `scripts/r2-deploy.mjs` — build 后运行：同步 R2 + 删除 `dist/img/` + 将 dist 中 HTML 的 `/img/` 替换为 R2 公网 URL
+- `public/img/` — 导入时下载的本地图片（`.gitignore` 中排除，不上传 git），本地唯一留存
 - `ARCHITECTURE.md` — 详尽的架构文档，数据处理和路由逻辑以它为参考
 - `TODO.md` — 待办事项列表，面向开发者，没有提到时无需关注
 
@@ -42,7 +49,7 @@ node scripts/cleanup-images.mjs                    # 清理 public/img/ 中未�
 ## 内容约定
 
 - 条目正文 HTML 中使用 `<a href="/entry/<slug>">` 或 `<a href="/topic/<slug>">` 引用其他页面
-- 图片以 `/img/<uuid>.ext` 引用本地图片（位于 `public/img/`）；后续上传 R2 后替换为 `https://cdn.example.com/img/<uuid>.ext`
+- 图片以 `/img/<uuid>.ext` 引用本地图片（位于 `public/img/`）；构建产物由 `scripts/r2-deploy.mjs` 替换为 `https://r2.pkuschronicles.com/<uuid>.ext`，源码始终用本地路径
 - 所有页面中文 (zh-CN)
 
 ## 数据模型

@@ -1,9 +1,9 @@
 [
   {
-    "slug": "1960-jian-xiao",
-    "title": "建校",
+    "slug": "1960-jian-xiao-ji-xiao-xun",
+    "title": "建校及校训",
     "date": "1960",
-    "contentFile": "1960-jian-xiao.html",
+    "contentFile": "1960-jian-xiao-ji-xiao-xun.html",
     "yqid": "pf5dvuo6guhqioo7"
   },
   {
@@ -82,6 +82,13 @@
     "date": "2009.4",
     "contentFile": "2009-wang-zheng-ren-xiao-chang.html",
     "yqid": "gf987r8my5htw5zg"
+  },
+  {
+    "yqid": "duhg58x0hk9foqro",
+    "slug": "2010-she-li-pei-yang-mu-biao-ju-ti-shi-jian-dai-kao",
+    "title": "设立培养目标（具体时间待考）",
+    "date": "2010",
+    "contentFile": "2010-she-li-pei-yang-mu-biao-ju-ti-shi-jian-dai-kao.html"
   },
   {
     "yqid": "rmbpgwrxe9v5n72u",
@@ -215,6 +222,13 @@
     "date": "2023.8?",
     "contentFile": "2023-nu-shen-xiang-ban-qian-ji-xi-lou-wai-xuan-chuan-dai-shi-gong.html",
     "yqid": "rdnnw0umuq2ngnkz"
+  },
+  {
+    "yqid": "gcnf9b2aqcrke6el",
+    "slug": "2023-pei-yang-mu-biao-xiu-gai",
+    "title": "培养目标修改",
+    "date": "2023.9",
+    "contentFile": "2023-pei-yang-mu-biao-xiu-gai.html"
   },
   {
     "slug": "2024-shuang-luo-xuan-diao-su-luo-cheng",

@@ -18,19 +18,20 @@
 
 Astro 5 静态站点，TypeScript strict mode。
 
-内容遵循 [ARCHITECTURE.md](./ARCHITECTURE.md) 中定义的数据模型，以条目（Entry）为最小单元，可归属零至多个专题（Topic）。所有资料本地存档，图片自托管于 `public/img/`，后续上CF R2，确保永不丢失。
+内容遵循 [ARCHITECTURE.md](./ARCHITECTURE.md) 中定义的数据模型，以条目（Entry）为最小单元，可归属零至多个专题（Topic）。所有资料本地存档，图片自托管于 `public/img/` 并同步至 Cloudflare R2，确保永不丢失。
 
 ```bash
 npm run dev      # 开发服务器
 npm run build    # 构建到 dist/
 npm run preview  # 预览构建结果
+npm run deploy   # 构建 + 同步图片到 R2 + 部署到 Cloudflare
 ```
 
 导入语雀知识库：
-在语雀网站上导出为lakebook；
+在语雀网站上导出为 lakebook，并在根目录准备 `.env`（复制 `.env.example` 后填充 `YUQUE_BASE_URL` 和 R2 相关变量）；
 
 ```bash
-node scripts/yuque-import.mjs [--topic <slug>] <语雀导出文件>
+npm run yuque-import -- [--topic <slug>] <语雀导出文件>
 ```
 
 详见 [ARCHITECTURE.md](./ARCHITECTURE.md)。

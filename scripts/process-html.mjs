@@ -4,6 +4,18 @@ import {fileURLToPath} from 'node:url';
 
 const IMG_DIR = join(process.cwd(), 'public/img');
 
+function requireEnv(name) {
+    const value = process.env[name];
+    if (!value) throw new Error(`缺少环境变量 ${name}，请在 .env 中填写`);
+    return value;
+}
+
+function escapeRegExp(value) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+const YUQUE_BASE_URL = requireEnv('YUQUE_BASE_URL').replace(/\/+$/, '');
+
 function ensureImgDir() {
     if (!existsSync(IMG_DIR)) {
         mkdirSync(IMG_DIR, {recursive: true});
@@ -117,7 +129,7 @@ export async function processContentHtml(body) {
         'href="$1"'
     );
     result = result.replace(
-        /href="https:\/\/pkuschool\.yuque\.com\/cl0o8b\/[^"]+"/gi,
+        new RegExp(`href="${escapeRegExp(YUQUE_BASE_URL)}\\/[^\"]+"`, 'gi'),
         (match) => {
             const url = match.slice(6, -1);
             const yqid = url.split('/').pop();
