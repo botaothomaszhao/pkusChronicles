@@ -18,9 +18,8 @@ npm run preview  # 预览构建结果
 ```bash
 npm run yuque-import -- [--topic <slug>] <语雀导出目录>   # 直接运行导入脚本
 npm run process-html -- [<文件/目录路径>] # 独立运行处理管线，参数为 .html 文件或含 .html 文件的目录（递归）
-npm run cleanup-images                            # 清理 public/img/ 中未被任何 HTML 引用的图片
+node scripts/cleanup-images.mjs                            # 清理 public/img/ 中未被任何 HTML 引用的图片
 npm run r2-sync                                   # 以 public/img/ 为准同步图片到 R2（上传缺失/变更，删除 R2 多余对象）
-npm run r2-deploy                                 # build 后运行：同步 R2 + 删除 dist/img + 将 dist HTML 的 /img/ 替换为 R2 公网 URL
 npm run deploy                                    # build + r2-deploy + wrangler deploy
 ```
 
