@@ -23,7 +23,7 @@ npm run r2-sync                                   # 以 public/img/ 为准同步
 npm run deploy                                    # build + r2-deploy + wrangler deploy
 ```
 
-环境变量在 `.env`（已 gitignore）中配置，模板见 `.env.example`。
+环境变量在 `.env`（已 gitignore）中配置，模板见 `.env.example`。`deploy`/`r2-sync` 使用 `--env-file-if-exists`，无 `.env` 也能运行：缺私有凭证时 `r2-deploy` 跳过同步，`R2_PUBLIC_URL` 为公开地址、脚本内置默认值，可被环境变量覆盖。
 
 ## 项目结构
 
