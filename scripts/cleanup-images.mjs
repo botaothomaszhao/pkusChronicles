@@ -5,6 +5,7 @@ const IMG_DIR = join(process.cwd(), 'public/img');
 const CONTENT_DIRS = [
   join(process.cwd(), 'src/content/entries'),
   join(process.cwd(), 'src/content/topics'),
+  join(process.cwd(), 'src/content/pages')
 ];
 
 function main() {

@@ -45,6 +45,7 @@ Backlink {
 | `/entry/[slug]` | 条目详情页 | 正文 + 所在专题导航 + 引用/被引用列表 |
 | `/topic` | 专题列表页 | 所有专题概览 |
 | `/topic/[slug]` | 专题详情页 | 说明 + 下属条目有序列表 |
+| `/links` | 友情链接页 | 正文来自 `src/content/pages/links.html`，同样经 processContentHtml 处理 |
 
 ## 条目详情页的导航上下文
 
@@ -125,9 +126,11 @@ pkuschronicles/
 │   │   ├── entries/            # 条目正文 HTML
 │   │   │   ├── 1920-jianxiao.html
 │   │   │   └── ...
-│   │   └── topics/             # 专题说明 HTML
-│   │       ├── tiyu.html
-│   │       └── ...
+│   │   ├── topics/             # 专题说明 HTML
+│   │   │   ├── tiyu.html
+│   │   │   └── ...
+│   │   └── pages/              # 独立页面正文 HTML（如友情链接）
+│   │       └── links.html
 │   ├── data/
 │   │   ├── entries.json
 │   │   └── topics.json
@@ -135,9 +138,10 @@ pkuschronicles/
 │   │   ├── index.astro         # 时间线主页
 │   │   ├── entry/
 │   │   │   └── [slug].astro    # 条目详情页
-│   │   └── topic/
-│   │       ├── index.astro     # 专题列表
-│   │       └── [slug].astro    # 专题详情页
+│   │   ├── topic/
+│   │   │   ├── index.astro     # 专题列表
+│   │   │   └── [slug].astro    # 专题详情页
+│   │   └── links.astro         # 友情链接页
 │   ├── lib/
 │   │   └── backlinks.ts        # 构建时计算反向引用
 │   └── layouts/
@@ -161,7 +165,7 @@ pkuschronicles/
 - 源码正文 HTML 始终使用 `/img/<uuid>.ext`，仅构建产物指向 R2 公网地址
 - R2 凭证与环境变量见 `.env.example`（复制为 `.env` 填写，已 gitignore）。`R2_PUBLIC_URL` 为公开地址、`r2-deploy` 内置默认值，可被环境变量覆盖；`r2-sync` 用 `--env-file-if-exists` 加载，无 `.env` 也能运行（同步图片需在本地或 CI 单独执行 `npm run r2-sync`）
 
-**清理未引用图片**：运行 `node scripts/cleanup-images.mjs`，扫描所有 HTML 中 `/img/` 引用并与 `public/img/` 实际文件比对，删除未引用的文件。清理后执行 `npm run r2-sync` 即可让线上同步删除。
+**清理未引用图片**：运行 `node scripts/cleanup-images.mjs`，扫描所有 HTML 中 `/img/` 引用并与 `public/img/` 实际文件比对，删除未引用的文件。`npm run r2-sync` 会先自动执行这一步，再同步到 R2。
 
 **部署**：`npm run deploy`（= build + r2 同步与替换 + wrangler deploy）。
 

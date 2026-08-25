@@ -9,6 +9,8 @@ const ENTRIES_DIR = join(process.cwd(), 'src/content/entries');
 const DATA_FILE = join(process.cwd(), 'src/data/entries.json');
 const TOPICS_FILE = join(process.cwd(), 'src/data/topics.json');
 const TOPICS_DIR = join(process.cwd(), 'src/content/topics');
+const PAGES_DIR = join(process.cwd(), 'src/content/pages');
+const LINKS_FILE = join(PAGES_DIR, 'links.html');
 
 function stripTones(s) {
   return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -118,9 +120,15 @@ async function main() {
 
     const titleRaw = docMeta.title;
 
+    // 统一拆分：`<前缀> - <内容>`，前缀决定文档类型
+    const [prefixPart, ...titleParts] = titleRaw.split(' - ');
+    const hasSep = titleParts.length > 0;
+    const prefix = prefixPart.trim();
+    const rest = titleParts.join(' - ').trim();
+
     // 专题文档
-    if (titleRaw.startsWith('topic - ')) {
-      const topicTitle = titleRaw.slice(7).trim();
+    if (hasSep && prefix === 'topic') {
+      const topicTitle = rest;
       const topicSlug = toSlug(topicTitle);
       topicDocs.push({ yqid: yuqueSlug, slug: topicSlug, title: topicTitle, bodyRaw });
 
@@ -135,17 +143,23 @@ async function main() {
       continue;
     }
 
-    // 常规条目
-    let date = '';
-    let displayTitle = titleRaw;
-    const sepIndex = titleRaw.indexOf(' - ');
-    if (sepIndex !== -1) {
-      date = titleRaw.substring(0, sepIndex).trim();
-      displayTitle = titleRaw.substring(sepIndex + 3).trim();
+    // 友情链接文档
+    if (hasSep && prefix === 'links') {
+      pendingHtml.push({
+        bodyRaw,
+        filePath: LINKS_FILE,
+        isTopic: false,
+      });
+      console.log(`[友情链接] ${yuqueSlug} → links.html`);
+      continue;
     }
 
-    if (!date) {
-      console.warn(`[缺少时间] ${yuqueSlug}  (${displayTitle})`);
+    // 常规条目：需满足 `<日期> - <标题>` 结构，否则忽略
+    const date = prefix;
+    const displayTitle = rest;
+    if (!hasSep || !date.match(/\d{4}/)) {
+      console.log(`[忽略] ${yuqueSlug}: ${titleRaw} 无日期或日期格式非法`);
+      continue;
     }
 
     const yearMatch = date.match(/\d{4}/);
@@ -287,6 +301,9 @@ async function main() {
 
   if (pendingHtml.some(p => !p.isTopic) && !existsSync(ENTRIES_DIR)) {
     mkdirSync(ENTRIES_DIR, { recursive: true });
+  }
+  if (pendingHtml.some(p => p.filePath === LINKS_FILE) && !existsSync(PAGES_DIR)) {
+    mkdirSync(PAGES_DIR, { recursive: true });
   }
 
   for (const { bodyRaw, filePath } of pendingHtml) {
