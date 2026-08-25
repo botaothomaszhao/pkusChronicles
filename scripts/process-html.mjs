@@ -36,9 +36,9 @@ function getYqidMap() {
 
 /**
  * 处理条目/专题的 HTML body：
- * 1. 下载 <img> 中的远程图片到 public/img/<filename>
- * 2. 替换 src 为 /img/<filename>
- * 3. 将带有 title 的 <img> 转换为 <figure>/<figcaption> 题注
+ * 1. 下载 <img> 中的远程图片到 public/img/<filename>，并替换 src 为 /img/<filename>
+ * 2. 将带有 title 的 <img> 转换为 <figure>/<figcaption> 题注
+ * 3. 将 Markdown 脚注 [^x]: / [^x] 转换为 <ol class="footnotes-list"> 列表及行内角标
  * 4. 将语雀链接 (`pkuschool.yuque.com/cl0o8b/…`) 转换为站内链接
  *
  * @param {string} body - 原始 HTML
@@ -105,10 +105,10 @@ export async function processContentHtml(body) {
     // 3. 将 Markdown 脚注 [^x] / [^x]: 转换为 HTML 角标
     // 将连续定义段落合并为 <ol class="footnotes-list">
     result = result.replace(
-        /(<p[^>]*><span class="ne-text">\[\^(\d+)]: [\s\S]*?<\/p>\s*)+/gi,
+        /(<p[^>]*><span[^>]*class="ne-text"[^>]*>\[\^(\d+)]: [\s\S]*?<\/p>\s*)+/gi,
         (match) => {
             const items = match.replace(
-                /<p[^>]*><span class="ne-text">\[\^(\d+)]: ([\s\S]*?)<\/span>([\s\S]*?)<\/p>/gi,
+                /<p[^>]*><span[^>]*class="ne-text"[^>]*>\[\^(\d+)]: ([\s\S]*?)<\/span>([\s\S]*?)<\/p>/gi,
                 (m, num, spanContent, rest) =>
                     `<li id="fn-${num}"><a href="#fnref-${num}" class="fn-back">↩</a> ${spanContent}${rest.trim()}</li>`
             );

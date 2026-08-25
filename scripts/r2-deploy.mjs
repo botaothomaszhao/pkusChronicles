@@ -10,21 +10,27 @@ const DEFAULT_R2_PUBLIC_URL = 'https://r2.pkuschronicles.com';
 function rewriteHtml(dir) {
   const publicUrl = process.env.R2_PUBLIC_URL || DEFAULT_R2_PUBLIC_URL;
 
-  let count = 0;
+  let files = 0;
+  let images = 0;
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const full = join(dir, entry.name);
     if (entry.isDirectory()) {
-      count += rewriteHtml(full);
+      const sub = rewriteHtml(full);
+      files += sub.files;
+      images += sub.images;
     } else if (entry.isFile() && extname(entry.name).toLowerCase() === '.html') {
       const content = readFileSync(full, 'utf-8');
-      const rewritten = content.replace(/\/img\/([^"'\s<>]+)/g, (m, f) => `${publicUrl}/${f}`);
+      const rewritten = content.replace(/\/img\/([^"'\s<>]+)/g, (m, f) => {
+        images++;
+        return `${publicUrl}/${f}`;
+      });
       if (rewritten !== content) {
         writeFileSync(full, rewritten, 'utf-8');
-        count++;
+        files++;
       }
     }
   }
-  return count;
+  return { files, images };
 }
 
 function main() {
@@ -34,8 +40,8 @@ function main() {
 
   // 替换 dist 中 HTML 的图片引用为 R2 公网地址
   if (existsSync(DIST_DIR)) {
-    const rewritten = rewriteHtml(DIST_DIR);
-    console.log(`已替换 ${rewritten} 个 HTML 文件的图片引用为 R2 地址`);
+    const { files, images } = rewriteHtml(DIST_DIR);
+    console.log(`已替换 ${files} 个文件中的 ${images} 个图片为 R2 地址`);
   }
 }
 
