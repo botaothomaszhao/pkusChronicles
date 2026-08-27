@@ -4,6 +4,7 @@ import path from 'node:path';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import entries from '../../data/entries.json';
 import topics from '../../data/topics.json';
+import resources from '../../data/resources.json';
 import { buildBacklinks } from '@/lib/backlinks.ts';
 
 export async function getStaticPaths() {
@@ -25,7 +26,7 @@ const topicEntries = topic.entries
     .map((id) => entries.find((e) => e.yqid === id || e.slug === id))
     .filter((e): e is NonNullable<typeof e> => e != null);
 
-const backlinks = buildBacklinks(entries, topics).get(`topic:${topic.slug}`) || [];
+const backlinks = buildBacklinks(entries, topics, resources).get(`topic:${topic.slug}`) || [];
 ---
 
 <BaseLayout title={topic.title}>

@@ -9,7 +9,7 @@
     "preview": "astro preview",
     "process-html": "node --env-file=.env scripts/process-html.mjs",
     "yuque-import": "node --env-file=.env scripts/yuque-import.mjs",
-    "r2-sync": "node scripts/cleanup-images.mjs && node --env-file-if-exists=.env scripts/r2-sync.mjs",
+    "r2-sync": "node scripts/cleanup-assets.mjs && node --env-file-if-exists=.env scripts/r2-sync.mjs",
     "deploy": "npm run build && node --env-file-if-exists=.env scripts/r2-deploy.mjs && wrangler deploy"
   },
   "dependencies": {

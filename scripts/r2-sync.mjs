@@ -10,7 +10,7 @@ import {
   DeleteObjectsCommand,
 } from '@aws-sdk/client-s3';
 
-const IMG_DIR = join(process.cwd(), 'public/img');
+const PUBLIC_DIR = join(process.cwd(), 'public');
 
 const CONTENT_TYPE_MAP = {
   '.jpg': 'image/jpeg',
@@ -20,6 +20,20 @@ const CONTENT_TYPE_MAP = {
   '.webp': 'image/webp',
   '.avif': 'image/avif',
   '.svg': 'image/svg+xml',
+  '.pdf': 'application/pdf',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
+  '.m4v': 'video/mp4',
+  '.mp3': 'audio/mpeg',
+  '.zip': 'application/zip',
+  '.doc': 'application/msword',
+  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  '.ppt': 'application/vnd.ms-powerpoint',
+  '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  '.xls': 'application/vnd.ms-excel',
+  '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  '.txt': 'text/plain',
+  '.json': 'application/json',
 };
 
 function requireEnv(name) {
@@ -69,21 +83,21 @@ async function listAllKeys(client, bucket) {
 }
 
 /**
- * 以 public/img/ 为事实来源，单向同步到 R2：
+ * 以 public/ 为事实来源（根级所有文件），单向同步到 R2：
  * 上传本地存在但 R2 缺失或大小不同的文件，删除 R2 存在但本地缺失的对象。
  */
 export async function syncImages() {
   const { endpoint, bucket } = parseR2Endpoint();
   const client = createClient(endpoint);
 
-  const localFiles = readdirSync(IMG_DIR).filter(f => statSync(join(IMG_DIR, f)).isFile());
+  const localFiles = readdirSync(PUBLIC_DIR).filter(f => statSync(join(PUBLIC_DIR, f)).isFile());
   const localSet = new Set(localFiles);
 
   const r2Keys = new Set(await listAllKeys(client, bucket));
 
   let uploaded = 0;
   for (const file of localFiles) {
-    const size = statSync(join(IMG_DIR, file)).size;
+    const size = statSync(join(PUBLIC_DIR, file)).size;
     let needUpload = true;
     if (r2Keys.has(file)) {
       try {
@@ -95,7 +109,7 @@ export async function syncImages() {
     }
     if (!needUpload) continue;
 
-    const body = readFileSync(join(IMG_DIR, file));
+    const body = readFileSync(join(PUBLIC_DIR, file));
     const ext = file.slice(file.lastIndexOf('.')).toLowerCase();
     await client.send(new PutObjectCommand({
       Bucket: bucket,

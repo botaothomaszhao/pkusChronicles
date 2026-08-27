@@ -2,7 +2,7 @@ import {writeFileSync, existsSync, mkdirSync, readFileSync, statSync, readdirSyn
 import {join, extname, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
-const IMG_DIR = join(process.cwd(), 'public/img');
+const PUBLIC_DIR = join(process.cwd(), 'public');
 
 function requireEnv(name) {
     const value = process.env[name];
@@ -16,9 +16,9 @@ function escapeRegExp(value) {
 
 const YUQUE_BASE_URL = requireEnv('YUQUE_BASE_URL').replace(/\/+$/, '');
 
-function ensureImgDir() {
-    if (!existsSync(IMG_DIR)) {
-        mkdirSync(IMG_DIR, {recursive: true});
+function ensurePublicDir() {
+    if (!existsSync(PUBLIC_DIR)) {
+        mkdirSync(PUBLIC_DIR, {recursive: true});
     }
 }
 
@@ -36,7 +36,7 @@ function getYqidMap() {
 
 /**
  * 处理条目/专题的 HTML body：
- * 1. 下载 <img> 中的远程图片到 public/img/<filename>，并替换 src 为 /img/<filename>
+ * 1. 下载 <img> 中的远程图片到 public/<filename>，并替换 src 为 /<filename>
  * 2. 将带有 title 的 <img> 转换为 <figure>/<figcaption> 题注
  * 3. 将 Markdown 脚注 [^x]: / [^x] 转换为 <ol class="footnotes-list"> 列表及行内角标
  * 4. 将语雀链接 (`pkuschool.yuque.com/cl0o8b/…`) 转换为站内链接
@@ -56,7 +56,7 @@ export async function processContentHtml(body) {
 
     // 1. 下载远程图片并替换 src
     if (srcs.size > 0) {
-        ensureImgDir();
+        ensurePublicDir();
 
         const urlToLocal = new Map();
         for (const src of srcs) {
@@ -68,7 +68,7 @@ export async function processContentHtml(body) {
             }
             if (!filename) continue;
             filename = decodeURIComponent(filename);
-            const localPath = join(IMG_DIR, filename);
+            const localPath = join(PUBLIC_DIR, filename);
 
             if (!existsSync(localPath)) {
                 try {
@@ -81,7 +81,7 @@ export async function processContentHtml(body) {
                     continue;
                 }
             }
-            urlToLocal.set(src, `/img/${filename}`);
+            urlToLocal.set(src, `/${filename}`);
         }
 
         for (const [originalUrl, localPath] of urlToLocal) {

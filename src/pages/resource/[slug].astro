@@ -1,0 +1,65 @@
+---
+import fs from 'node:fs';
+import path from 'node:path';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import entries from '../../data/entries.json';
+import topics from '../../data/topics.json';
+import resources from '../../data/resources.json';
+import { buildBacklinks } from '@/lib/backlinks.ts';
+
+export async function getStaticPaths() {
+  return resources.map((resource) => ({
+    params: { slug: resource.slug },
+    props: { resource },
+  }));
+}
+
+const { resource } = Astro.props;
+
+let contentHtml = '';
+if (resource.contentFile) {
+  const contentPath = path.resolve('src/content/resources', resource.contentFile);
+  if (fs.existsSync(contentPath)) {
+    contentHtml = fs.readFileSync(contentPath, 'utf-8');
+  }
+}
+
+const backlinks = buildBacklinks(entries, topics, resources).get(`resource:${resource.slug}`) || [];
+---
+
+<BaseLayout title={resource.title}>
+  <h1>{resource.title}</h1>
+  {resource.date && <time>{resource.date}</time>}
+
+  {resource.sourceUrl && (
+    <p class="source-link">
+      原始出处：<a href={resource.sourceUrl} target="_blank" rel="noopener noreferrer">{resource.sourceUrl}</a>
+    </p>
+  )}
+
+  {contentHtml && (
+    <div class="entry-content">
+      <Fragment set:html={contentHtml} />
+    </div>
+  )}
+  <br>
+
+  {backlinks.length > 0 && (
+    <section>
+      <h2>引用</h2>
+      <ul>
+        {backlinks.map((src) => (
+          <li>
+            <a href={`/${src.type}/${src.slug}`}>{src.title}</a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+</BaseLayout>
+
+<style>
+  .source-link {
+    word-break: break-all;
+  }
+</style>

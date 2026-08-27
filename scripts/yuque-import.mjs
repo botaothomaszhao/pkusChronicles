@@ -11,6 +11,8 @@ const TOPICS_FILE = join(process.cwd(), 'src/data/topics.json');
 const TOPICS_DIR = join(process.cwd(), 'src/content/topics');
 const PAGES_DIR = join(process.cwd(), 'src/content/pages');
 const LINKS_FILE = join(PAGES_DIR, 'links.html');
+const RESOURCES_DIR = join(process.cwd(), 'src/content/resources');
+const RESOURCES_FILE = join(process.cwd(), 'src/data/resources.json');
 
 function stripTones(s) {
   return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -87,6 +89,17 @@ async function main() {
     existingTopics = JSON.parse(readFileSync(TOPICS_FILE, 'utf-8'));
   }
 
+  let existingResources = [];
+  if (existsSync(RESOURCES_FILE)) {
+    existingResources = JSON.parse(readFileSync(RESOURCES_FILE, 'utf-8'));
+  }
+
+  const existingResourceYqidMap = new Map();
+  for (const resource of existingResources) {
+    if (resource.yqid) existingResourceYqidMap.set(resource.yqid, resource);
+  }
+  const usedResourceSlugs = new Set(existingResources.map(r => r.slug));
+
   const existingYqidMap = new Map();
   for (const entry of existingEntries) {
     if (entry.yqid) existingYqidMap.set(entry.yqid, entry);
@@ -96,7 +109,9 @@ async function main() {
   const processedYqids = new Set();
   const topicDocs = [];
   const newEntryData = [];
+  const newResourceData = [];
   let updatedCount = 0;
+  let resourceUpdatedCount = 0;
 
   // 所有待处理 HTML 的内容（Phase 2 中处理）
   const pendingHtml = [];
@@ -151,6 +166,62 @@ async function main() {
         isTopic: false,
       });
       console.log(`[友情链接] ${yuqueSlug} → links.html`);
+      continue;
+    }
+
+    // 资料条目：`resource - 标题` 或 `resource <日期> - 标题`
+    const resourceMatch = prefix.match(/^resource(?:\s+(.+))?$/);
+    if (hasSep && resourceMatch) {
+      const resourceDate = resourceMatch[1]?.trim() || '';
+      if (resourceDate && !resourceDate.match(/\d{4}/)) {
+        console.log(`[忽略] ${yuqueSlug}: ${titleRaw} 资料日期格式非法`);
+        continue;
+      }
+
+      const yearMatch = resourceDate.match(/\d{4}/);
+      const yearPrefix = yearMatch ? yearMatch[0] : '';
+      const slugBase = toSlug(rest);
+      // slug 去重
+      let finalSlug = yearPrefix ? `${yearPrefix}-${slugBase}` : slugBase;
+      let counter = 1;
+      const existingResource = existingResourceYqidMap.get(yuqueSlug);
+      while (usedResourceSlugs.has(finalSlug)) {
+        if (existingResource && existingResource.slug === finalSlug) break;
+        finalSlug = yearPrefix ? `${yearPrefix}-${slugBase}-${counter}` : `${slugBase}-${counter}`;
+        counter++;
+      }
+      usedResourceSlugs.add(finalSlug);
+
+      const newFile = `${finalSlug}.html`;
+      if (existingResource) {
+        // 覆盖已有资料
+        if (existingResource.contentFile && existingResource.contentFile !== newFile) {
+          staleFiles.push(join(RESOURCES_DIR, existingResource.contentFile));
+        }
+        existingResource.slug = finalSlug;
+        existingResource.title = rest;
+        existingResource.type = 'article';
+        existingResource.contentFile = newFile;
+        if (resourceDate) existingResource.date = resourceDate;
+        else delete existingResource.date;
+        resourceUpdatedCount++;
+        console.log(`[覆盖资料] ${yuqueSlug} → ${finalSlug}  (${rest})`);
+      } else {
+        newResourceData.push({
+          yqid: yuqueSlug,
+          slug: finalSlug,
+          title: rest,
+          ...(resourceDate ? { date: resourceDate } : {}),
+          type: 'article',
+          contentFile: newFile,
+        });
+        console.log(`[新增资料] ${yuqueSlug} → ${finalSlug}  (${rest})`);
+      }
+      pendingHtml.push({
+        bodyRaw,
+        filePath: join(RESOURCES_DIR, newFile),
+        isTopic: false,
+      });
       continue;
     }
 
@@ -225,6 +296,20 @@ async function main() {
   merged.sort(compareDate);
   writeFileSync(DATA_FILE, JSON.stringify(merged, null, 2) + '\n', 'utf-8');
   console.log(`\n完成: ${existingEntries.length} 已有 (${updatedCount} 覆盖) + ${newEntryData.length} 新增 = ${merged.length} 总计`);
+
+  // === 写入 resources.json ===
+
+  // 有日期按日期升序在前，无日期保持相对顺序排在后面
+  function compareResource(a, b) {
+    if (!a.date && !b.date) return 0;
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return compareDate(a, b);
+  }
+  const mergedResources = [...existingResources, ...newResourceData];
+  mergedResources.sort(compareResource);
+  writeFileSync(RESOURCES_FILE, JSON.stringify(mergedResources, null, 2) + '\n', 'utf-8');
+  console.log(`资料: ${existingResources.length} 已有 (${resourceUpdatedCount} 覆盖) + ${newResourceData.length} 新增 = ${mergedResources.length} 总计`);
 
   // === 写入 topics.json ===
 
@@ -301,6 +386,9 @@ async function main() {
 
   if (pendingHtml.some(p => !p.isTopic) && !existsSync(ENTRIES_DIR)) {
     mkdirSync(ENTRIES_DIR, { recursive: true });
+  }
+  if (pendingHtml.some(p => p.filePath.startsWith(RESOURCES_DIR)) && !existsSync(RESOURCES_DIR)) {
+    mkdirSync(RESOURCES_DIR, { recursive: true });
   }
   if (pendingHtml.some(p => p.filePath === LINKS_FILE) && !existsSync(PAGES_DIR)) {
     mkdirSync(PAGES_DIR, { recursive: true });

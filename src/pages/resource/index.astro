@@ -1,0 +1,36 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import resources from '../../data/resources.json';
+
+const typeLabels: Record<string, string> = {
+  article: '文章',
+  webpage: '网页',
+  video: '视频',
+  file: '文件',
+};
+---
+
+<BaseLayout title="资料保存">
+  <h1>资料保存</h1>
+  <div class="intro">
+    <p>以独立页面存档的资料：从公众号等渠道转存的文章、视频、文件与网页。时间线中的条目可直接引用这些资料。</p>
+  </div>
+  {resources.map((resource) => (
+    <article>
+      {resource.date && <time>{resource.date}</time>}
+      <a href={`/resource/${resource.slug}`}>{resource.title}</a>
+      <span class="type-badge">{typeLabels[resource.type] ?? resource.type}</span>
+    </article>
+  ))}
+</BaseLayout>
+
+<style>
+  .type-badge {
+    color: #8c8c8c;
+    font-size: 13px;
+    border: 1px solid #d8dad9;
+    border-radius: 3px;
+    padding: 0 4px;
+    margin-left: 6px;
+  }
+</style>

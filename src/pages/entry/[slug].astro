@@ -4,6 +4,7 @@ import path from 'node:path';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import entries from '../../data/entries.json';
 import topics from '../../data/topics.json';
+import resources from '../../data/resources.json';
 import { buildBacklinks } from '@/lib/backlinks.ts';
 
 export async function getStaticPaths() {
@@ -21,7 +22,7 @@ if (fs.existsSync(contentPath)) {
   contentHtml = fs.readFileSync(contentPath, 'utf-8');
 }
 
-const backlinks = buildBacklinks(entries, topics).get(`entry:${entry.slug}`) || [];
+const backlinks = buildBacklinks(entries, topics, resources).get(`entry:${entry.slug}`) || [];
 
 const entryId = entry.yqid || entry.slug;
 const findEntry = (id: string) => entries.find((e) => e.yqid === id || e.slug === id);
