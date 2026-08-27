@@ -56,7 +56,7 @@ npm run deploy                                    # build + r2-deploy + wrangler
 见 `ARCHITECTURE.md` 的完整定义。核心要点：
 - `Entry`: slug, title, date, contentFile, yqid
 - `Topic`: slug, title, descriptionFile, entries[]
-- `Resource`: slug, title, type('article'|'webpage'|'video'|'file'), date?, sourceUrl?, contentFile?, yqid?
+- `Resource`: slug, title, type('article'|'webpage'|'video'|'file'), date?, sourceUrl?, contentFile?, description?, yqid?
 - 时间线顺序 = entries.json 数组顺序（不依赖 date 字段）
 - 资料保存页顺序 = resources.json 数组顺序（有 date 按日期升序在前）
 - 一个条目可属 0~N 个专题

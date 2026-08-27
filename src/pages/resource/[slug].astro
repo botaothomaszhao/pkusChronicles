@@ -37,6 +37,20 @@ const backlinks = buildBacklinks(entries, topics, resources).get(`resource:${res
     </p>
   )}
 
+  {resource.description && <p class="resource-description">{resource.description}</p>}
+
+  {resource.type === 'file' && resource.contentFile && (
+    <>
+      {resource.contentFile.toLowerCase().endsWith('.pdf') ? (
+        <object data={resource.contentFile} type="application/pdf" width="100%" style="min-height:85vh">
+          <a href={resource.contentFile}>下载查看</a>
+        </object>
+      ) : (
+        <p><a href={resource.contentFile}>下载查看</a></p>
+      )}
+    </>
+  )}
+
   {contentHtml && (
     <div class="entry-content">
       <Fragment set:html={contentHtml} />

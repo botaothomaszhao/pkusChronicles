@@ -37,7 +37,8 @@ Resource {
   type: 'article' | 'webpage' | 'video' | 'file'   // 资料形式
   date?: string           // 可选时间，如 "2023.8.10"
   sourceUrl?: string      // 可选原始出处链接（公众号/B站/网盘等）
-  contentFile?: string    // 可选正文 HTML；纯外链资料可缺省
+  contentFile?: string    // 可选正文 HTML；file 类型时为 PDF 等文件的根路径
+  description?: string    // 可选描述文字，显示在原始出处之后、文件预览/正文之前
   yqid?: string           // 语雀原始 slug，用于去重
 }
 ```

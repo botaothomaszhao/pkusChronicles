@@ -1,7 +1,8 @@
 import { readFileSync, existsSync, readdirSync, rmSync } from 'node:fs';
-import { join, extname } from 'node:path';
+import { join, extname, basename } from 'node:path';
 
 const PUBLIC_DIR = join(process.cwd(), 'public');
+const RESOURCES_DATA = join(process.cwd(), 'src/data/resources.json');
 const CONTENT_DIRS = [
   join(process.cwd(), 'src/content/entries'),
   join(process.cwd(), 'src/content/topics'),
@@ -25,6 +26,16 @@ function main() {
   // 收集所有 content HTML 中引用的根路径资产名
   const referenced = new Set();
   const assetRefRegex = /(?:src|href|data)="\/([^"#?\s/]+)"/g;
+
+  // 文件型资料的 contentFile 引用的资产（如 PDF），不在 content HTML 中也要保留
+  if (existsSync(RESOURCES_DATA)) {
+    const resources = JSON.parse(readFileSync(RESOURCES_DATA, 'utf-8'));
+    for (const resource of resources) {
+      if (resource.type === 'file' && resource.contentFile) {
+        referenced.add(basename(resource.contentFile));
+      }
+    }
+  }
   for (const dir of CONTENT_DIRS) {
     if (!existsSync(dir)) continue;
     for (const file of readdirSync(dir)) {
