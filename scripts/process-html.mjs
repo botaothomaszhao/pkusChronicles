@@ -34,6 +34,34 @@ function getYqidMap() {
     return yqidMap;
 }
 
+let sourceUrlMap = null;
+
+function normalizeUrl(url) {
+    try {
+        const u = new URL(url);
+        return (u.host + u.pathname.replace(/\/+$/, '')).toLowerCase();
+    } catch {
+        return url.replace(/\/+$/, '').toLowerCase();
+    }
+}
+
+/**
+ * 构建 sourceUrl -> slug 映射，用于把正文中指向资源原始出处的外链转换为站内资源链接。
+ * 忽略 query/hash、尾部分号及大小写差异。
+ */
+function getSourceUrlMap() {
+    if (sourceUrlMap) return sourceUrlMap;
+    sourceUrlMap = new Map();
+    const filePath = join(process.cwd(), 'src/data/resources.json');
+    if (!existsSync(filePath)) return sourceUrlMap;
+    const resources = JSON.parse(readFileSync(filePath, 'utf-8'));
+    for (const r of resources) {
+        if (!r.sourceUrl) continue;
+        sourceUrlMap.set(normalizeUrl(r.sourceUrl), r.slug);
+    }
+    return sourceUrlMap;
+}
+
 /**
  * 处理条目/专题的 HTML body：
  * 1. 下载 <img> 中的远程图片到 public/<filename>，并替换 src 为 /<filename>
@@ -138,6 +166,21 @@ export async function processContentHtml(body) {
             return `href="/${target.type}/${target.slug}"`;
         }
     );
+
+    // 5. 将指向资源 sourceUrl 的外链转换为站内资源链接
+    // `(?<!-)href` 避免误匹配语雀导出的 data-href 属性；站内链接（以 / 开头）跳过
+    const sourceMap = getSourceUrlMap();
+    if (sourceMap.size > 0) {
+        result = result.replace(
+            /(?<!-)href="([^"]+)"/g,
+            (match, href) => {
+                if (href.startsWith('/')) return match;
+                const slug = sourceMap.get(normalizeUrl(href));
+                if (!slug) return match;
+                return `href="/resource/${slug}"`;
+            }
+        );
+    }
 
     return result;
 }

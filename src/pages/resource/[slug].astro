@@ -51,6 +51,13 @@ const backlinks = buildBacklinks(entries, topics, resources).get(`resource:${res
     </>
   )}
 
+  {resource.type === 'video' && resource.contentFile && (
+    <video controls width="100%" style="max-height: 80vh">
+      <source src={resource.contentFile} type="video/mp4" />
+      您的浏览器不支持视频播放。
+    </video>
+  )}
+
   {contentHtml && (
     <div class="entry-content">
       <Fragment set:html={contentHtml} />

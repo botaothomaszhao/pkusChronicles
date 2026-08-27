@@ -31,7 +31,7 @@ function main() {
   if (existsSync(RESOURCES_DATA)) {
     const resources = JSON.parse(readFileSync(RESOURCES_DATA, 'utf-8'));
     for (const resource of resources) {
-      if (resource.type === 'file' && resource.contentFile) {
+      if ((resource.type === 'file' || resource.type === 'video') && resource.contentFile) {
         referenced.add(basename(resource.contentFile));
       }
     }

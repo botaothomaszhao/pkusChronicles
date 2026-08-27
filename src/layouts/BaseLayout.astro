@@ -1,12 +1,29 @@
 ---
+import resources from '../data/resources.json';
+
 export interface Props {
   title: string;
 }
 const { title } = Astro.props;
+
+const resourceMeta: Array<{ slug: string; sourceUrl: string; title: string }> = resources
+  .filter((r) => r.sourceUrl)
+  .map((r) => ({ slug: r.slug, sourceUrl: r.sourceUrl!, title: r.title }));
 ---
 
 <!doctype html>
 <style is:global>@import '../styles/global.css';</style>
+<style is:global>
+  a.res-external {
+    margin-left: 0.15em;
+    font-size: 0.85em;
+    text-decoration: none;
+  }
+  .res-sep {
+    color: #c8cbc9;
+    margin: 0 0.3em;
+  }
+</style>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
@@ -23,5 +40,38 @@ const { title } = Astro.props;
     <main>
       <slot />
     </main>
+
+    <script is:inline define:vars={{ resourceMeta }}>
+      (() => {
+        const anchors = document.querySelectorAll(
+          'main .entry-content a[href^="/resource/"], main .topic-description a[href^="/resource/"]'
+        );
+        if (anchors.length === 0) return;
+
+        const meta = new Map(resourceMeta.map((r) => [r.slug, r]));
+
+        for (const a of anchors) {
+          const slug = a.getAttribute('href').replace(/^\/resource\//, '').split('/')[0];
+          const m = meta.get(slug);
+          if (!m) continue;
+
+          const sep = document.createElement('span');
+          sep.className = 'res-sep';
+          sep.setAttribute('aria-hidden', 'true');
+          sep.textContent = '|';
+
+          const ext = document.createElement('a');
+          ext.className = 'res-external';
+          ext.href = m.sourceUrl;
+          ext.target = '_blank';
+          ext.rel = 'noopener noreferrer';
+          ext.setAttribute('aria-label', `打开原始出处：${m.title}`);
+          ext.textContent = '↗';
+
+          a.insertAdjacentElement('afterend', sep);
+          sep.insertAdjacentElement('afterend', ext);
+        }
+      })();
+    </script>
   </body>
 </html>
