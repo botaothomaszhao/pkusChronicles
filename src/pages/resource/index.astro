@@ -3,7 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import resources from '../../data/resources.json';
 
 const typeLabels: Record<string, string> = {
-  article: '文章',
+  article: '公众号',
   webpage: '网页',
   video: '视频',
   file: '文档',
@@ -15,6 +15,7 @@ const typeLabels: Record<string, string> = {
   <div class="intro">
     <p>以独立页面存档的资料：从公众号等渠道转存的文章、视频、文件与网页。时间线中的条目可直接引用这些资料。</p>
     <p>仅作为历史资料保存，如有侵权请联系管理员。</p>
+    <p>微信公众号存档使用了 © Suen 的 <a href="https://wx.bdfz.net/" target="_blank" rel="noopener">微信存档</a> · <a href="https://bdfz.net" target="_blank" rel="noopener">bdfz.net</a></p>
   </div>
   {resources.map((resource) => (
     <article>

@@ -1,6 +1,7 @@
 import {writeFileSync, existsSync, mkdirSync, readFileSync, statSync, readdirSync} from 'node:fs';
 import {join, extname, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {processWechatLinks} from './wechat-resource.mjs';
 
 const PUBLIC_DIR = join(process.cwd(), 'public');
 
@@ -167,7 +168,10 @@ export async function processContentHtml(body) {
         }
     );
 
-    // 5. 将指向资源 sourceUrl 的外链转换为站内资源链接
+    // 5. 将微信公众文章链接提取为独立资源页并转换链接
+    result = await processWechatLinks(result);
+
+    // 6. 将指向资源 sourceUrl 的外链转换为站内资源链接
     // `(?<!-)href` 避免误匹配语雀导出的 data-href 属性；站内链接（以 / 开头）跳过
     const sourceMap = getSourceUrlMap();
     if (sourceMap.size > 0) {

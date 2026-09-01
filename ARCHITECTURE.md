@@ -194,6 +194,7 @@ pkuschronicles/
 附件资产（图片、视频、PDF 及其他文件）统一扁平存放在 `public/` 根目录，文件名保持 UUID 或 ASCII 名（如 `1783671726076-xxxx.png`、`some-doc.pdf`）。源码 HTML 以根路径引用：`/<filename>`；R2 直链则为 `https://r2.pkuschronicles.com/<filename>`。
 
 - **`scripts/process-html.mjs`** 在导入时自动将 `<img src="...">` 的远程图片下载到 `public/<uuid>.ext`，并把正文 `src` 替换为 `/<uuid>.ext`（UUID 来自 URL 最后一段）
+- **`scripts/wechat-resource.mjs`** 被 `processContentHtml` 调用：扫描正文中指向 `https://mp.weixin.qq.com/s/...` 的链接，经由 `https://wx.bdfz.net`（API）抓取文章、下载其图片、生成资源页（`type: article`，`sourceUrl` 为原始链接）写入 `resources.json`，并把链接替换为 `/resource/<slug>`；若锚点文本本身就是链接则一并替换为文章标题。以 `sourceUrl` 判重，未入库资源自动新生成。抓取时移除页面外壳（`source`/`footer`/`h1`/`meta`，仅保留 `<article>` 内容），并从渲染页 `.meta` 的 `Published: YYYY-MM-DD` 提取日期写入 `Resource.date`（点分格式，如 `2022.3.14`），资源列表按日期升序与无日期组排序
 - **`scripts/yuque-import.mjs`** 处理资料（`resource` 前缀）时，正文与条目走同一管线，附件同样落在 `public/` 根
 - `public/` 根级资产已加入 `.gitignore`，不上传 git，仅本地留存（同步到 R2 后线上访问）
 

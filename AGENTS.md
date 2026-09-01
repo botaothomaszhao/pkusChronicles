@@ -33,7 +33,8 @@ npm run deploy                                    # build + r2-deploy + wrangler
 - `src/content/topics/*.html` — 专题说明（纯 HTML）
 - `src/lib/backlinks.ts` — 构建时反向引用计算（统计 entry / topics / resources 正文 HTML 中的站内链接）
 - `scripts/yuque-import.mjs` — 从语雀导出目录导入条目，自动下载图片到 `public/` 根并替换 HTML 中的 src；`resource` 前缀导入为资料条目
-- `scripts/process-html.mjs` — HTML 处理管线（图片下载到 `public/` 根、后续注释格式等其他转换），被 `yuque-import.mjs` 调用，也可独立运行
+- `scripts/process-html.mjs` — HTML 处理管线（图片下载到 `public/` 根、微信文章链接转资源页、脚注等其他转换），被 `yuque-import.mjs` 调用，也可独立运行
+- `scripts/wechat-resource.mjs` — 微信公众文章链接处理（调用 wx.bdfz.net API 转存为资源页），被 `process-html.mjs` 调用
 - `scripts/cleanup-assets.mjs` — 清理 `public/` 根下未被任何 HTML 引用的附件资产（图片/视频/PDF 等）
 - `scripts/r2-sync.mjs` — 以 `public/` 根级文件为事实来源单向同步附件到 R2（上传/删除），凭证来自 `.env`
 - `scripts/r2-deploy.mjs` — build 后运行：从 `dist/` 删除 `public/` 同名根级资产 + 将 dist 中 HTML 指向这些资产的 `/<name>` 替换为 R2 公网 URL（不做同步）
