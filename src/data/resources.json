@@ -8,11 +8,83 @@
     "sourceUrl": "https://v.youku.com/v_show/id_XNjc5NDk1MzAw.html"
   },
   {
+    "slug": "bei-da-fu-zhong-wei-ming-xue-yuan-cheng-li-yin-xing-shi-bao",
+    "title": "北大附中未名学院成立 | 银杏时报",
+    "type": "article",
+    "sourceUrl": "https://mp.weixin.qq.com/s/ShILOooPoDXe7BoOXurcYw",
+    "contentFile": "bei-da-fu-zhong-wei-ming-xue-yuan-cheng-li-yin-xing-shi-bao.html",
+    "date": "2021.2.4"
+  },
+  {
+    "slug": "zui-hao-de-zhong-xue-zui-hou-de-gai-ge",
+    "title": "最好的中学，最后的改革",
+    "type": "article",
+    "sourceUrl": "https://mp.weixin.qq.com/s/X_UwmbvsHe7oKd7P8qZHTw",
+    "contentFile": "zui-hao-de-zhong-xue-zui-hou-de-gai-ge.html",
+    "date": "2022.3.14"
+  },
+  {
     "slug": "2023-xin-sheng-ru-xue-zhi-dao-shou-ce-jian-ming-ban",
     "title": "新生入学指导手册（简明版）",
     "type": "file",
     "date": "2023.8.10",
     "contentFile": "/新生入学指导手册（简明版）-2023年8月.pdf",
     "description": "来自26届新生入学时的希悦通知。包含学生手册主要内容。"
+  },
+  {
+    "slug": "xiao-xun-xiu-gai-zhi-bei",
+    "title": "校训修改指北",
+    "type": "article",
+    "sourceUrl": "https://mp.weixin.qq.com/s/tXEdRucrofbYaE2EheEV0w",
+    "contentFile": "xiao-xun-xiu-gai-zhi-bei.html",
+    "date": "2023.9.5"
+  },
+  {
+    "slug": "yin-xing-nian-nian-zhi-wei-shui-sheng",
+    "title": "银杏年年，知为谁生？",
+    "type": "article",
+    "sourceUrl": "https://mp.weixin.qq.com/s/xt35dvS528Qn_69zKDJ4SA",
+    "contentFile": "yin-xing-nian-nian-zhi-wei-shui-sheng.html",
+    "date": "2023.9.6"
+  },
+  {
+    "slug": "fu-zhong-ren-wu-zhi-feng-mu-yu-di-li-qian-hang-bei-da-fu-zhong-liu-mei-de-xiao-chang",
+    "title": "附中人物｜栉风沐雨 砥砺前行——北大附中刘美德校长",
+    "type": "article",
+    "sourceUrl": "https://mp.weixin.qq.com/s/SpDjf8MfCHljTdiSAn1JfQ",
+    "contentFile": "fu-zhong-ren-wu-zhi-feng-mu-yu-di-li-qian-hang-bei-da-fu-zhong-liu-mei-de-xiao-chang.html",
+    "date": "2023.11.8"
+  },
+  {
+    "slug": "fu-zhong-ren-wu-bu-wang-chu-xin-fang-de-shi-zhong-yuan-bei-da-fu-zhong-xiao-chang-chen-jian-gang",
+    "title": "附中人物｜不忘初心，方得始终——原北大附中校长陈剑刚",
+    "type": "article",
+    "sourceUrl": "https://mp.weixin.qq.com/s/dFe76m2dNkcBzzQZ2rOYcQ",
+    "contentFile": "fu-zhong-ren-wu-bu-wang-chu-xin-fang-de-shi-zhong-yuan-bei-da-fu-zhong-xiao-chang-chen-jian-gang.html",
+    "date": "2023.11.30"
+  },
+  {
+    "slug": "hei-kuai-lai-ren-shi-yi-xia-xiao-yuan-li-de-xin-peng-you",
+    "title": "嘿，快来认识一下校园里的“新朋友”！",
+    "type": "article",
+    "sourceUrl": "https://mp.weixin.qq.com/s/mRURC5zsXLK3dobhaKQ95w",
+    "contentFile": "hei-kuai-lai-ren-shi-yi-xia-xiao-yuan-li-de-xin-peng-you.html",
+    "date": "2024.2.25"
+  },
+  {
+    "slug": "fu-zhong-gu-shi-lu-ping-xiao-chang-yu-bei-da-fu-zhong",
+    "title": "附中故事｜陆平校长与北大附中",
+    "type": "article",
+    "sourceUrl": "https://mp.weixin.qq.com/s/Tjbzgu4Nc3g0Jss_GtSlfg",
+    "contentFile": "fu-zhong-gu-shi-lu-ping-xiao-chang-yu-bei-da-fu-zhong.html",
+    "date": "2024.4.30"
+  },
+  {
+    "slug": "qing-yun-yuan-zhi-gun-bei-da-fu-zhong-2026-jie-gao-zhong-bi-ye-dian-li-ji-cheng-ren-li-hui-gu",
+    "title": "青云·远志丨北大附中2026届高中毕业典礼暨成人礼回顾",
+    "type": "article",
+    "sourceUrl": "https://mp.weixin.qq.com/s/n35zSfBOXkD8FBdpIVDusQ",
+    "contentFile": "qing-yun-yuan-zhi-gun-bei-da-fu-zhong-2026-jie-gao-zhong-bi-ye-dian-li-ji-cheng-ren-li-hui-gu.html",
+    "date": "2026.6.18"
   }
 ]
