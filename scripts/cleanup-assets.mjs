@@ -24,8 +24,10 @@ function main() {
   }
 
   // 收集所有 content HTML 中引用的根路径资产名
+  // 属性形式 src/href/data="/x.ext"，以及 CSS background-image: url("/x.ext")（含 &quot;/&apos; 实体引号）
   const referenced = new Set();
-  const assetRefRegex = /(?:src|href|data)="\/([^"#?\s/]+)"/g;
+  const assetRefRegex =
+    /(?:src|href|data)\s*=\s*"?\/([^"#?\s/]+)|url\(\s*(?:"|'|&quot;|&apos;)?\/([^"#?\s)&]+)/gi;
 
   // 文件型资料的 contentFile 引用的资产（如 PDF），不在 content HTML 中也要保留
   if (existsSync(RESOURCES_DATA)) {
@@ -43,7 +45,7 @@ function main() {
       const content = readFileSync(join(dir, file), 'utf-8');
       let match;
       while ((match = assetRefRegex.exec(content)) !== null) {
-        referenced.add(match[1]);
+        referenced.add(match[1] ?? match[2]);
       }
     }
   }

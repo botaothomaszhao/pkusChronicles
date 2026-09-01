@@ -111,13 +111,26 @@ function resolveImageSrc(src) {
   return { url: downloadUrl, filename };
 }
 
-async function downloadRemoteImages(html) {
-  const imgRegex = /<img[^>]+src="([^"]+)"[^>]*>/gi;
+export async function downloadRemoteImages(html) {
   const srcs = new Set();
+
+  // <img src="..."> 中的图片
+  const imgRegex = /<img[^>]+src="([^"]+)"[^>]*>/gi;
   let match;
   while ((match = imgRegex.exec(html)) !== null) {
     srcs.add(match[1]);
   }
+
+  // CSS background-image: url(...) 中的远程图片（含 &quot;/&apos; 等实体引号）
+  const bgRegex = /background-image\s*:\s*url\(([^)]+)\)/gi;
+  while ((match = bgRegex.exec(html)) !== null) {
+    const raw = match[1]
+      .trim()
+      .replace(/^(&quot;|&apos;|"|')/, '')
+      .replace(/(&quot;|&apos;|"|')$/, '');
+    if (raw) srcs.add(raw);
+  }
+
   if (srcs.size === 0) return html;
 
   ensureDir(PUBLIC_DIR);
@@ -148,7 +161,7 @@ async function downloadRemoteImages(html) {
   return result;
 }
 
-function extractBody(html) {
+export function extractBody(html) {
   const match = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
   return match ? match[1] : html;
 }
@@ -175,19 +188,19 @@ function stripBalancedElement(html, openRegex, tagName) {
   return html;
 }
 
-function cleanArticleBody(body) {
+export function cleanArticleBody(body) {
   let html = stripBalancedElement(body, /<div[^>]*class="source"[^>]*>/i, 'div');
   return stripBalancedElement(html, /<footer[^>]*>/i, 'footer').trim();
 }
 
-function extractPublishedDate(html) {
+export function extractPublishedDate(html) {
   const match = html.match(/Published:\s*(\d{4})-(\d{2})-(\d{2})/i);
   if (!match) return undefined;
   const [, y, m, d] = match;
   return `${y}.${Number(m)}.${Number(d)}`;
 }
 
-async function ingestArticle(wechatUrl) {
+export async function ingestArticle(wechatUrl) {
   const resp = await fetch(`${WX_BASE_URL}/api/ingest`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -203,7 +216,7 @@ async function ingestArticle(wechatUrl) {
   return data;
 }
 
-async function fetchArticleContent(apiSlug) {
+export async function fetchArticleContent(apiSlug) {
   const resp = await fetch(`${WX_BASE_URL}/${apiSlug}`, { signal: timeoutSignal() });
   if (!resp.ok) throw new Error(`渲染页 HTTP ${resp.status}`);
   return await resp.text();
