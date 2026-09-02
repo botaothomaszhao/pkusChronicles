@@ -1,6 +1,7 @@
 import { writeFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { join, extname } from 'node:path';
 import { pinyin } from 'pinyin';
+import { parse as parseCss, generate as generateCss } from 'css-tree';
 
 const WX_BASE_URL = 'https://wx.bdfz.net';
 const PUBLIC_DIR = join(process.cwd(), 'public');
@@ -90,7 +91,7 @@ function resolveImageSrc(src) {
   const isRelative = src.startsWith('/');
   const downloadUrl = isRelative ? `${WX_BASE_URL}${src}` : src;
 
-  let filename = '';
+  let filename;
   try {
     const parsed = new URL(src, WX_BASE_URL);
     let base = parsed.pathname.split('/').pop() || '';
@@ -162,8 +163,19 @@ export async function downloadRemoteImages(html) {
 }
 
 export function extractBody(html) {
-  const match = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-  return match ? match[1] : html;
+  const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+  const body = bodyMatch ? bodyMatch[1] : html;
+
+  // 保留 <head> 中的 <style>，否则部分 CSS 缺失
+  const headPart = bodyMatch ? html.slice(0, bodyMatch.index) : '';
+  const styles = [];
+  const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+  let m;
+  while ((m = styleRegex.exec(headPart)) !== null) {
+    styles.push(m[0]);
+  }
+
+  return styles.join('\n') + body;
 }
 
 /**
@@ -230,10 +242,99 @@ function anchorTextIsRawLink(href, text) {
   return WECHAT_LINK_REGEX.test(trimmed) || RAW_WECHAT_LINK_REGEX.test(trimmed);
 }
 
+// 把微信渲染页 <style> 里的全局选择器收敛到 .entry-content，避免污染站点导航/标题/结尾等
+function collectSelectors(node, out) {
+  if (!node || typeof node !== 'object') return;
+  if (node.type === 'Atrule' && /keyframes$/i.test(node.name)) return;
+  if (node.type === 'Selector') {
+    out.push(node);
+    return;
+  }
+  if (node.type === 'SelectorList') {
+    node.children.forEach((c) => collectSelectors(c, out));
+    return;
+  }
+  for (const key of Object.keys(node)) {
+    const v = node[key];
+    if (!v || typeof v !== 'object') continue;
+    if (typeof v.forEach === 'function') v.forEach((c) => collectSelectors(c, out));
+    else if (v.type) collectSelectors(v, out);
+  }
+}
+
+function scopeCss(css) {
+  const ast = parseCss(css);
+  const sels = [];
+  collectSelectors(ast, sels);
+  for (const s of sels) {
+    const first = s.children.first;
+    if (s.children.size === 1 && first?.type === 'PseudoClassSelector' && first.name === 'root') {
+      // :root 变量需要落在内容容器上，才能被子元素继承
+      s.children.clear();
+      s.children.prependData({ type: 'ClassSelector', name: 'entry-content' });
+    } else {
+      s.children.prependData({ type: 'Combinator', name: ' ' });
+      s.children.prependData({ type: 'ClassSelector', name: 'entry-content' });
+    }
+  }
+  return generateCss(ast);
+}
+
+function scopeHtmlCss(html) {
+  return html.replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, (full, css) => {
+    try {
+      return full.replace(css, scopeCss(css));
+    } catch {
+      return full;
+    }
+  });
+}
+
+/**
+ * 导入 / 重新导入一条微信资源：拉取内容、下载图片、写入资源文件并更新 resources.json。
+ * 已有同 sourceUrl 资源则覆盖其内容与元数据（保留 slug），否则新建。
+ */
+export async function importWechatUrl(wechatUrl) {
+  const data = await ingestArticle(wechatUrl);
+  const title = data.title.trim();
+  const content = await fetchArticleContent(data.slug);
+  const body = cleanArticleBody(extractBody(content));
+  const localContent = await downloadRemoteImages(body);
+  const scopedContent = scopeHtmlCss(localContent);
+  const publishedDate = extractPublishedDate(content);
+
+  const resources = loadResources();
+  const existing = resources.find((r) => r.sourceUrl && normalizeUrl(r.sourceUrl) === normalizeUrl(wechatUrl));
+  const knownSlugs = new Set(resources.map((r) => r.slug));
+
+  let finalSlug = existing ? existing.slug : toSlug(title);
+  let counter = 1;
+  while (!existing && knownSlugs.has(finalSlug)) {
+    finalSlug = `${toSlug(title)}-${counter}`;
+    counter++;
+  }
+
+  ensureDir(RESOURCES_DIR);
+  writeFileSync(join(RESOURCES_DIR, `${finalSlug}.html`), scopedContent, 'utf-8');
+
+  const resource = {
+    slug: finalSlug,
+    ...(title ? { title } : existing ? { title: existing.title } : {}),
+    type: 'article',
+    sourceUrl: wechatUrl,
+    contentFile: `${finalSlug}.html`,
+    ...(publishedDate ? { date: publishedDate } : {}),
+  };
+  if (existing) Object.assign(existing, resource);
+  else resources.push(resource);
+  resources.sort(compareResource);
+  writeFileSync(RESOURCES_FILE, JSON.stringify(resources, null, 2) + '\n', 'utf-8');
+
+  return resource;
+}
+
 export async function processWechatLinks(html) {
   const map = getWechatMap();
-  const usedSlugs = new Set(map.values().map((v) => v.slug));
-  const pendingSlugs = [];
 
   const found = [];
   const linkRegex = /(?<!-)href="([^"]+)"[^>]*>/gi;
@@ -255,43 +356,10 @@ export async function processWechatLinks(html) {
     }
 
     try {
-      const data = await ingestArticle(wechatUrl);
-      const title = data.title.trim();
-      const content = await fetchArticleContent(data.slug);
-      const body = cleanArticleBody(extractBody(content));
-      const publishedDate = extractPublishedDate(content);
-      const localContent = await downloadRemoteImages(body);
-
-      const base = toSlug(title);
-      let finalSlug = base;
-      let counter = 1;
-      while (usedSlugs.has(finalSlug) || pendingSlugs.includes(finalSlug)) {
-        finalSlug = `${base}-${counter}`;
-        counter++;
-      }
-
-      ensureDir(RESOURCES_DIR);
-      writeFileSync(join(RESOURCES_DIR, `${finalSlug}.html`), localContent, 'utf-8');
-
-      const resources = loadResources();
-      const newResource = {
-        slug: finalSlug,
-        title,
-        type: 'article',
-        sourceUrl: wechatUrl,
-        contentFile: `${finalSlug}.html`,
-        ...(publishedDate ? { date: publishedDate } : {}),
-      };
-      resources.push(newResource);
-      resources.sort(compareResource);
-      writeFileSync(RESOURCES_FILE, JSON.stringify(resources, null, 2) + '\n', 'utf-8');
-
-      const resource = { slug: finalSlug, title };
+      const resource = await importWechatUrl(wechatUrl);
       map.set(key, resource);
-      usedSlugs.add(finalSlug);
-      pendingSlugs.push(finalSlug);
       urlToResource.set(key, resource);
-      console.log(`[微信资源] ${wechatUrl} → ${finalSlug}  (${title}${publishedDate ? `, ${publishedDate}` : ''})`);
+      console.log(`[微信资源] ${wechatUrl} → ${resource.slug}  (${resource.title}${resource.date ? `, ${resource.date}` : ''})`);
     } catch (err) {
       console.error(`[微信资源失败] ${wechatUrl}: ${err.message}`);
     }
