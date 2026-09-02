@@ -9,32 +9,9 @@ import {
   PutObjectCommand,
   DeleteObjectsCommand,
 } from '@aws-sdk/client-s3';
+import { contentTypeOf } from './assets.mjs';
 
 const PUBLIC_DIR = join(process.cwd(), 'public');
-
-const CONTENT_TYPE_MAP = {
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.png': 'image/png',
-  '.gif': 'image/gif',
-  '.webp': 'image/webp',
-  '.avif': 'image/avif',
-  '.svg': 'image/svg+xml',
-  '.pdf': 'application/pdf',
-  '.mp4': 'video/mp4',
-  '.webm': 'video/webm',
-  '.m4v': 'video/mp4',
-  '.mp3': 'audio/mpeg',
-  '.zip': 'application/zip',
-  '.doc': 'application/msword',
-  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  '.ppt': 'application/vnd.ms-powerpoint',
-  '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  '.xls': 'application/vnd.ms-excel',
-  '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  '.txt': 'text/plain',
-  '.json': 'application/json',
-};
 
 function requireEnv(name) {
   const value = process.env[name];
@@ -110,12 +87,11 @@ export async function syncImages() {
     if (!needUpload) continue;
 
     const body = readFileSync(join(PUBLIC_DIR, file));
-    const ext = file.slice(file.lastIndexOf('.')).toLowerCase();
     await client.send(new PutObjectCommand({
       Bucket: bucket,
       Key: file,
       Body: body,
-      ContentType: CONTENT_TYPE_MAP[ext] ?? 'application/octet-stream',
+      ContentType: contentTypeOf(file),
     }));
     uploaded++;
     console.log(`[上传] ${file}`);

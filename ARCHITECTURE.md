@@ -201,7 +201,7 @@ pkuschronicles/
 **R2 存储**：附件通过 Cloudflare R2 提供线上访问，本地 `public/` 根级文件为唯一事实来源，单向同步到 R2：
 
 - **`scripts/r2-sync.mjs`** 用 S3 兼容 API（`@aws-sdk/client-s3`）同步：以 `public/` 根级所有文件为准，上传本地存在但 R2 缺失或大小不同的文件，删除 R2 存在但本地缺失的对象（即本地清理未引用资产后，线上同步删除）。支持图片、PDF、视频等常用扩展名（`CONTENT_TYPE_MAP`）
-- **`scripts/r2-deploy.mjs`** 在 `npm run build` 后运行：从 `dist/` 删除 `public/` 中存在的同名根级资产（不再随站点体积发布），并将 `dist/` 下所有 HTML 中指向这些资产的引用（`/<name>`）替换为 `https://r2.pkuschronicles.com/<name>`；不做同步。注意仅替换 `public/` 清单内的文件名，避免误伤 `/entry/`、`/topic/` 等站内路由
+- **`scripts/r2-deploy.mjs`** 在 `npm run build` 后运行：从 `dist/` 删除"托管资产扩展名"的根级文件（不再随站点体积发布），并将 `dist/` 下所有 HTML 中的资产引用（`/<name>`，覆盖 `src`/`href`/`data` 属性与 CSS `url()` 含实体引号）替换为 `https://r2.pkuschronicles.com/<name>`；不做同步。仅凭扩展名白名单识别（内容层已保证资产带后缀），不依赖 `public/`，可在无 `public/` 的部署服务器运行；带后缀定义白名单也与 `r2-sync` 一致，避免误伤 `/entry/`、`/topic/` 等站内路由
 - 源码正文 HTML 始终使用 `/<filename>`，仅构建产物指向 R2 公网地址
 - R2 凭证与环境变量见 `.env.example`（复制为 `.env` 填写，已 gitignore）。`R2_PUBLIC_URL` 为公开地址、`r2-deploy` 内置默认值，可被环境变量覆盖；`r2-sync` 用 `--env-file-if-exists` 加载，无 `.env` 也能运行（同步需在本地或 CI 单独执行 `npm run r2-sync`）
 

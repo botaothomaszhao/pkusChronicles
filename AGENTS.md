@@ -20,7 +20,7 @@ npm run yuque-import -- [--topic <slug>] <语雀导出目录>   # 直接运行�
 npm run process-html -- [<文件/目录路径>] # 独立运行处理管线，参数为 .html 文件或含 .html 文件的目录（递归）
 node scripts/cleanup-assets.mjs                            # 清理 public/ 根下未被任何 HTML 引用的附件资产（图片/视频/PDF等），在 r2-sync 中会自动执行
 npm run r2-sync                                   # 先清理未引用附件资产，再以 public/ 根级文件为准同步到 R2（上传缺失/变更，删除 R2 多余对象）
-npm run deploy                                    # build + r2-deploy + wrangler deploy
+npm run deploy                                    # build + r2-deploy + wrangler deploy，需要运行在cloudflare的自动部署上，没有public/的本地文件
 ```
 
 环境变量在 `.env`（已 gitignore）中配置，模板见 `.env.example`。`r2-sync` 使用 `--env-file-if-exists`，无 `.env` 也能运行；`R2_PUBLIC_URL` 为公开地址、`r2-deploy` 内置默认值，可被环境变量覆盖。
@@ -34,10 +34,10 @@ npm run deploy                                    # build + r2-deploy + wrangler
 - `src/lib/backlinks.ts` — 构建时反向引用计算（统计 entry / topics / resources 正文 HTML 中的站内链接）
 - `scripts/yuque-import.mjs` — 从语雀导出目录导入条目，自动下载图片到 `public/` 根并替换 HTML 中的 src；`resource` 前缀导入为资料条目
 - `scripts/process-html.mjs` — HTML 处理管线（图片下载到 `public/` 根、微信文章链接转资源页、脚注等其他转换），被 `yuque-import.mjs` 调用，也可独立运行
-- `scripts/wechat-resource.mjs` — 微信公众文章链接处理（调用 wx.bdfz.net API 转存为资源页），被 `process-html.mjs` 调用
+- `scripts/wechat-resource.mjs` — 微信公众文章链接处理（调用 wx.bdfz.net API 转存为资源页），被 `process-html.mjs` 调用；转存时下载的图片以 src 的确定性 hash 命名并自带白名单后缀（pathname 扩展名 > `wx_fmt` > magic bytes），避免不同图尾段同名（如 `/640`）或产生无后缀文件
 - `scripts/cleanup-assets.mjs` — 清理 `public/` 根下未被任何 HTML 引用的附件资产（图片/视频/PDF 等）
 - `scripts/r2-sync.mjs` — 以 `public/` 根级文件为事实来源单向同步附件到 R2（上传/删除），凭证来自 `.env`
-- `scripts/r2-deploy.mjs` — build 后运行：从 `dist/` 删除 `public/` 同名根级资产 + 将 dist 中 HTML 指向这些资产的 `/<name>` 替换为 R2 公网 URL（不做同步）
+- `scripts/r2-deploy.mjs` — build 后运行：从 `dist/` 删除托管扩展名的根级资产 + 将 dist 中 HTML 的资产引用（`/<name>`，含 CSS `url()`）替换为 R2 公网 URL（不做同步，凭扩展名白名单识别，不依赖 `public/`）
 - `public/` — 导入时下载的本地附件资产（`public/` 已在 `.gitignore` 排除，不上传 git），本地唯一留存；扁平存放图片/视频/PDF 等，文件名用 UUID 或 ASCII 名
 - `ARCHITECTURE.md` — 详尽的架构文档，数据处理和路由逻辑以它为参考
 - `TODO.md` — 待办事项列表，面向开发者，没有提到时无需关注

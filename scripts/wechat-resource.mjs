@@ -1,5 +1,6 @@
 import { writeFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { join, extname } from 'node:path';
+import { createHash } from 'node:crypto';
 import { pinyin } from 'pinyin';
 import { parse as parseCss, generate as generateCss } from 'css-tree';
 
@@ -81,35 +82,39 @@ function compareResource(a, b) {
   return compareDate(a, b);
 }
 
+// 微信图片可用格式白名单（wx_fmt / magic bytes / pathname 扩展名都须落回这些）
+const ALLOWED_EXT = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp']);
+
+// 从文件头 magic bytes 识别图片类型，返回扩展名（无点），无法识别返回 ''
+function detectImageExt(buffer) {
+  if (buffer.length < 12) return '';
+  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return 'jpg';
+  if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) return 'png';
+  if (buffer.toString('latin1', 0, 3) === 'GIF') return 'gif';
+  if (buffer.toString('latin1', 0, 4) === 'RIFF' && buffer.toString('latin1', 8, 12) === 'WEBP') return 'webp';
+  return '';
+}
+
 /**
- * 解析图片 src，返回 { url, filename }。
- * - 绝对路径（https://img.bdfz.net/... 等）：直接下载，文件名取末段。
- * - 相对路径（/img?u=<encoded> 兜底代理）：拼上 WX_BASE_URL 下载，文件名与扩展名取自
- *   解码后的 u 参数（原始 CDN URL，如 .../640?wx_fmt=gif）。
+ * 解析图片 src，返回 { url, realUrl }。
+ * - 绝对路径（https://img.bdfz.net/... 等）：url 即 src，realUrl 即 src。
+ * - 相对路径（/img?u=<encoded> 兜底代理）：拼上 WX_BASE_URL 下载，realUrl 为解码后的原始 CDN URL。
  */
 function resolveImageSrc(src) {
   const isRelative = src.startsWith('/');
   const downloadUrl = isRelative ? `${WX_BASE_URL}${src}` : src;
 
-  let filename;
+  let realUrl = src;
   try {
     const parsed = new URL(src, WX_BASE_URL);
-    let base = parsed.pathname.split('/').pop() || '';
-
-    if (isRelative && base === 'img') {
+    if (isRelative && parsed.pathname.split('/').pop() === 'img') {
       const encoded = parsed.searchParams.get('u');
-      if (encoded) {
-        const real = new URL(decodeURIComponent(encoded));
-        base = real.pathname.split('/').pop() || '';
-        const fmt = real.searchParams.get('wx_fmt');
-        if (fmt && !extname(base)) base += `.${fmt}`;
-      }
+      if (encoded) realUrl = decodeURIComponent(encoded);
     }
-    filename = decodeURIComponent(base);
   } catch {
-    filename = '';
+    // realUrl 保持为 src
   }
-  return { url: downloadUrl, filename };
+  return { url: downloadUrl, realUrl };
 }
 
 export async function downloadRemoteImages(html) {
@@ -137,15 +142,52 @@ export async function downloadRemoteImages(html) {
   ensureDir(PUBLIC_DIR);
   const urlToLocal = new Map();
   for (const src of srcs) {
-    const { url, filename } = resolveImageSrc(src);
-    if (!filename) continue;
-    const localPath = join(PUBLIC_DIR, filename);
+    const { url, realUrl } = resolveImageSrc(src);
+    const name = createHash('sha1').update(realUrl).digest('hex').slice(0, 12);
 
+    // 优先复用历史缓存：末段自带扩展名且本地已存在该图时沿用旧名，
+    // 避免改名后重复下载（旧图此前已安全下载过，且原命名不涉及 /640 类撞名）
+    let legacy = '';
+    try {
+      legacy = decodeURIComponent(new URL(realUrl).pathname.split('/').pop() || '');
+    } catch {
+      // 解析失败则 legacy 为空
+    }
+    let filename;
+    if (legacy && extname(legacy) && existsSync(join(PUBLIC_DIR, legacy))) {
+      filename = legacy;
+    } else {
+      // 无后缀或末段不可靠：用 hash 名 + 后缀（pathname 扩展名 > wx_fmt 白名单）
+      filename = name;
+      try {
+        const parsed = new URL(realUrl);
+        let ext = extname(parsed.pathname).replace('.', '').toLowerCase();
+        if (!ALLOWED_EXT.has(ext)) ext = '';
+        if (!ext) {
+          const fmt = (parsed.searchParams.get('wx_fmt') || '').toLowerCase();
+          if (ALLOWED_EXT.has(fmt)) ext = fmt;
+        }
+        if (ext) filename = `${name}.${ext}`;
+      } catch {
+        // 保持 filename = name
+      }
+    }
+
+    let localPath = join(PUBLIC_DIR, filename);
     if (!existsSync(localPath)) {
       try {
         const res = await fetch(url, { signal: timeoutSignal() });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const buffer = Buffer.from(await res.arrayBuffer());
+        if (!extname(filename)) {
+          const detected = detectImageExt(buffer);
+          if (!detected) {
+            console.error(`[微信图片无法识别格式] ${src}`);
+            continue;
+          }
+          filename = `${name}.${detected}`;
+          localPath = join(PUBLIC_DIR, filename);
+        }
         writeFileSync(localPath, buffer);
       } catch (err) {
         console.error(`[微信图片下载失败] ${src}: ${err.message}`);
