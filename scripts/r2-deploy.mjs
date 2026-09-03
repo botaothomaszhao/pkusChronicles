@@ -40,7 +40,7 @@ function rewriteHtml(dir) {
       const content = readFileSync(full, 'utf-8');
       const rewritten = content
         .replace(/(?<=(?:src|href|data)=["'])\/([^"'#?\s/]+)/g, replaceRef)
-        .replace(/url\(\s*(?:"|'|&quot;|&apos;)?\/([^"'#?\s)&]+)/gi, replaceRef);
+        .replace(/(?<=url\(\s*(?:"|'|&quot;|&apos;)?)\/([^"'#?\s)&]+)/gi, replaceRef);
       if (rewritten !== content) {
         writeFileSync(full, rewritten, 'utf-8');
         files++;
