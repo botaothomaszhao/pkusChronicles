@@ -13,7 +13,7 @@
     "deploy": "npm run build && node --env-file-if-exists=.env scripts/r2-deploy.mjs && wrangler deploy"
   },
   "dependencies": {
-    "astro": "^5.0.0",
+    "astro": "^7.4.8",
     "pinyin": "^4.0.0"
   },
   "devDependencies": {
