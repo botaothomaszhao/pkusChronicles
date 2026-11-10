@@ -18,6 +18,7 @@ npm run preview  # 预览构建结果
 ```bash
 npm run yuque-import -- [--topic <slug>] <语雀导出目录>   # 直接运行导入脚本
 npm run process-html -- [<文件/目录路径>] # 独立运行处理管线，参数为 .html 文件或含 .html 文件的目录（递归）
+node scripts/redownload-wechat.mjs [<slug>]               # 重新转存公众号文章资源（刷新正文、图片与日期），不带参数处理全部，带 slug 只处理该条
 node scripts/cleanup-assets.mjs                            # 清理 public/ 根下未被任何 HTML 引用的附件资产（图片/视频/PDF等），在 r2-sync 中会自动执行
 npm run r2-sync                                   # 先清理未引用附件资产，再以 public/ 根级文件为准同步到 R2（上传缺失/变更，删除 R2 多余对象）
 npm run deploy                                    # build + r2-deploy + wrangler deploy，需要运行在cloudflare的自动部署上，没有public/的本地文件
@@ -35,6 +36,7 @@ npm run deploy                                    # build + r2-deploy + wrangler
 - `scripts/yuque-import.mjs` — 从语雀导出目录导入条目，自动下载图片到 `public/` 根并替换 HTML 中的 src；`resource` 前缀导入为资料条目
 - `scripts/process-html.mjs` — HTML 处理管线（图片下载到 `public/` 根、微信文章链接转资源页、脚注等其他转换），被 `yuque-import.mjs` 调用，也可独立运行
 - `scripts/wechat-resource.mjs` — 微信公众文章链接处理（调用 wx.bdfz.net API 转存为资源页），被 `process-html.mjs` 调用；转存时下载的图片以 src 的确定性 hash 命名并自带白名单后缀（pathname 扩展名 > `wx_fmt` > magic bytes），避免不同图尾段同名（如 `/640`）或产生无后缀文件
+- `scripts/redownload-wechat.mjs` — 重新转存 `resources.json` 中所有指向 `mp.weixin.qq.com/s/` 的已有资源，刷新其正文、图片与日期；可传 slug 只处理单条
 - `scripts/cleanup-assets.mjs` — 清理 `public/` 根下未被任何 HTML 引用的附件资产（图片/视频/PDF 等）
 - `scripts/r2-sync.mjs` — 以 `public/` 根级文件为事实来源单向同步附件到 R2（上传/删除），凭证来自 `.env`
 - `scripts/r2-deploy.mjs` — build 后运行：从 `dist/` 删除托管扩展名的根级资产 + 将 dist 中 HTML 的资产引用（`/<name>`，含 CSS `url()`）替换为 R2 公网 URL（不做同步，凭扩展名白名单识别，不依赖 `public/`）

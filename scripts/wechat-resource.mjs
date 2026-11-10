@@ -83,7 +83,8 @@ function compareResource(a, b) {
 }
 
 // 微信图片可用格式白名单（wx_fmt / magic bytes / pathname 扩展名都须落回这些）
-const ALLOWED_EXT = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp']);
+// 微信编辑器会把装饰性矢量图导出为 .svg 文件，需一并支持
+const ALLOWED_EXT = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']);
 
 // 从文件头 magic bytes 识别图片类型，返回扩展名（无点），无法识别返回 ''
 function detectImageExt(buffer) {
@@ -92,6 +93,9 @@ function detectImageExt(buffer) {
   if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) return 'png';
   if (buffer.toString('latin1', 0, 3) === 'GIF') return 'gif';
   if (buffer.toString('latin1', 0, 4) === 'RIFF' && buffer.toString('latin1', 8, 12) === 'WEBP') return 'webp';
+  // SVG 是文本：允许 BOM、XML 声明与前导注释
+  const head = buffer.toString('utf8', 0, Math.min(buffer.length, 1024)).replace(/^\uFEFF/, '').trimStart();
+  if (/^(?:<\?xml[\s\S]*?\?>\s*)?(?:<!--[\s\S]*?-->\s*)*<svg[\s>]/i.test(head)) return 'svg';
   return '';
 }
 
@@ -127,14 +131,18 @@ export async function downloadRemoteImages(html) {
     srcs.add(match[1]);
   }
 
-  // CSS background-image: url(...) 中的远程图片（含 &quot;/&apos; 等实体引号）
-  const bgRegex = /background-image\s*:\s*url\(([^)]+)\)/gi;
+  // CSS background-image 中的远程图片（值内可能先有 linear-gradient 等多个函数，需取出全部 url()；含 &quot;/&apos; 等实体引号）
+  const bgRegex = /background-image\s*:\s*([^;}"']+)/gi;
   while ((match = bgRegex.exec(html)) !== null) {
-    const raw = match[1]
-      .trim()
-      .replace(/^(&quot;|&apos;|"|')/, '')
-      .replace(/(&quot;|&apos;|"|')$/, '');
-    if (raw) srcs.add(raw);
+    const urlRegex = /url\(([^)]+)\)/gi;
+    let urlMatch;
+    while ((urlMatch = urlRegex.exec(match[1])) !== null) {
+      const raw = urlMatch[1]
+        .trim()
+        .replace(/^(&quot;|&apos;|"|')/, '')
+        .replace(/(&quot;|&apos;|"|')$/, '');
+      if (raw) srcs.add(raw);
+    }
   }
 
   if (srcs.size === 0) return html;
@@ -255,9 +263,14 @@ export function extractPublishedDate(html) {
 }
 
 export async function ingestArticle(wechatUrl) {
+  // 接口校验请求来源，需带上站内 origin
   const resp = await fetch(`${WX_BASE_URL}/api/ingest`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: {
+      'content-type': 'application/json',
+      origin: WX_BASE_URL,
+      referer: `${WX_BASE_URL}/`,
+    },
     body: JSON.stringify({ url: wechatUrl }),
     signal: timeoutSignal(),
   });

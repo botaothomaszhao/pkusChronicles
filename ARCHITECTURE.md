@@ -196,6 +196,7 @@ pkuschronicles/
 - **`scripts/process-html.mjs`** 在导入时自动将 `<img src="...">` 的远程图片下载到 `public/<uuid>.ext`，并把正文 `src` 替换为 `/<uuid>.ext`（UUID 来自 URL 最后一段）
 - **`scripts/wechat-resource.mjs`** 被 `processContentHtml` 调用：扫描正文中指向 `https://mp.weixin.qq.com/s/...` 的链接，经由 `https://wx.bdfz.net`（API）抓取文章、下载其图片、生成资源页（`type: article`，`sourceUrl` 为原始链接）写入 `resources.json`，并把链接替换为 `/resource/<slug>`；若锚点文本本身就是链接则一并替换为文章标题。以 `sourceUrl` 判重，未入库资源自动新生成。抓取时移除页面外壳（`source`/`footer`/`h1`/`meta`，仅保留 `<article>` 内容），保留 `<head>` 中的 `<style>` 块并用 `css-tree` 把其中的全局选择器收敛到 `.entry-content`（`@font-face`/`@keyframes` 不动、`:root` 变量改落到 `.entry-content` 上），确保样式只作用于内容、不污染站点导航/标题/结尾，并从渲染页 `.meta` 的 `Published: YYYY-MM-DD` 提取日期写入 `Resource.date`（点分格式，如 `2022.3.14`），资源列表按日期升序与无日期组排序
 - **`scripts/yuque-import.mjs`** 处理资料（`resource` 前缀）时，正文与条目走同一管线，附件同样落在 `public/` 根
+- **`scripts/redownload-wechat.mjs`** 重新转存已入库的公众号资源：读取 `resources.json` 中 `sourceUrl` 匹配 `mp.weixin.qq.com/s/` 的条目，逐条调用 `importWechatUrl` 覆盖更新正文、图片与日期。用法 `node scripts/redownload-wechat.mjs [<slug>]`，不带参数处理全部，带 slug 只处理该条；单条失败不影响其余条目，最后输出成功/失败计数
 - `public/` 根级资产已加入 `.gitignore`，不上传 git，仅本地留存（同步到 R2 后线上访问）
 
 **R2 存储**：附件通过 Cloudflare R2 提供线上访问，本地 `public/` 根级文件为唯一事实来源，单向同步到 R2：
