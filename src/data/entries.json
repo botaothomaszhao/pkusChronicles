@@ -133,6 +133,13 @@
     "yqid": "gxkpxw1wf5zcnnv6"
   },
   {
+    "yqid": "dfvaliatwmeqxq1x",
+    "slug": "2015-bu-shu-office365-kai-qi-yammer",
+    "title": "部署 Office365，开启 Yammer",
+    "date": "2015",
+    "contentFile": "2015-bu-shu-office365-kai-qi-yammer.html"
+  },
+  {
     "yqid": "uhd604nge30161g3",
     "slug": "2015-nu-shen-xiang-di-er-ci-zhong-hui",
     "title": "女神像第二次重绘",
@@ -161,6 +168,13 @@
     "contentFile": "2018-chu-zhong-bu-jia-ru-yuan-pei-xiang-mu.html"
   },
   {
+    "yqid": "eazvwzovzz5l2i0m",
+    "slug": "2018-subit-she-tuan-zu-jian-bing-jie-guan-yammer-she-qu-guan-li-shi-jian-dai-kao",
+    "title": "SubIT 社团组建并接管 Yammer 社区管理（时间待考）",
+    "date": "2018",
+    "contentFile": "2018-subit-she-tuan-zu-jian-bing-jie-guan-yammer-she-qu-guan-li-shi-jian-dai-kao.html"
+  },
+  {
     "slug": "2018-xiao-yuan-jing-guan-gai-zao-wan-cheng",
     "title": "校园景观改造完成",
     "date": "2018.9",
@@ -175,6 +189,13 @@
     "contentFile": "2018-ti-yu-guan-er-qi-ji-zong-he-lou-zheng-shou-qi-dong-xu-bu-tu.html"
   },
   {
+    "yqid": "nqo1blgmdoxalr20",
+    "slug": "2019-fa-bu-yammer-yue-fa-san-zhang",
+    "title": "发布Yammer 约法三章",
+    "date": "2019.1",
+    "contentFile": "2019-fa-bu-yammer-yue-fa-san-zhang.html"
+  },
+  {
     "yqid": "tffw5y444nywtfua",
     "slug": "2019-gao-kao-zhu-ke-hui-gui-xie-zuo-zhong-xin-qu-xiao",
     "title": "高考主科回归，写作中心取消",
@@ -182,11 +203,25 @@
     "contentFile": "2019-gao-kao-zhu-ke-hui-gui-xie-zuo-zhong-xin-qu-xiao.html"
   },
   {
+    "yqid": "qlb6ugo5uppr19lt",
+    "slug": "2019-yu-wen-ke-kai-shi-shi-yong-yammer-jiao-xue-ju-ti-shi-jian-dai-kao",
+    "title": "语文课开始使用 Yammer 教学（具体时间待考）",
+    "date": "2019.9",
+    "contentFile": "2019-yu-wen-ke-kai-shi-shi-yong-yammer-jiao-xue-ju-ti-shi-jian-dai-kao.html"
+  },
+  {
     "yqid": "mtiaxi3pvgf35oim",
     "slug": "2020-cheng-li-hong-yi-shu-yuan",
     "title": "成立弘毅书院",
     "date": "2020.8",
     "contentFile": "2020-cheng-li-hong-yi-shu-yuan.html"
+  },
+  {
+    "yqid": "pgimgpg68v71vrme",
+    "slug": "2020-xue-sheng-tong-guo-yammer-fan-ying-shi-tang-wen-ti-tui-dong-geng-huan-cheng-bao-shang",
+    "title": "学生通过 Yammer 反映食堂问题，推动更换承包商",
+    "date": "2020.10",
+    "contentFile": "2020-xue-sheng-tong-guo-yammer-fan-ying-shi-tang-wen-ti-tui-dong-geng-huan-cheng-bao-shang.html"
   },
   {
     "yqid": "unfugsed2mqbtknp",
@@ -203,6 +238,13 @@
     "contentFile": "2021-dian-zi-she-bei-zheng-ce.html"
   },
   {
+    "yqid": "nzgl30yyo44ugu5u",
+    "slug": "2021-yammer-tao-lun-huan-jing-e-hua-xue-xiao-kao-lu-guan-bi",
+    "title": "Yammer 讨论环境恶化，学校考虑关闭",
+    "date": "2021.12",
+    "contentFile": "2021-yammer-tao-lun-huan-jing-e-hua-xue-xiao-kao-lu-guan-bi.html"
+  },
+  {
     "slug": "2021-wang-zheng-bei-mian-zhi",
     "title": "王铮被免职",
     "date": "2021.12.14",
@@ -215,6 +257,13 @@
     "date": "2022.3.15",
     "contentFile": "2022-ma-yu-guo-ren-xiao-chang.html",
     "yqid": "rwhshgc21giywdm9"
+  },
+  {
+    "yqid": "ag5f4i72bspggege",
+    "slug": "2022-xiao-yuan-guan-li-wen-ti-she-qu-guan-bi-da-ni-wan-xu-shui-chi-shou-xian",
+    "title": "“校园管理问题”社区关闭，“大泥湾蓄水池”受限",
+    "date": "2022.7",
+    "contentFile": "2022-xiao-yuan-guan-li-wen-ti-she-qu-guan-bi-da-ni-wan-xu-shui-chi-shou-xian.html"
   },
   {
     "yqid": "sq51uxg3t8yi8smg",
@@ -273,11 +322,32 @@
     "contentFile": "2023-xin-xi-hua-ru-jiao-zhi-xiang-qi-ta-tiao-mu-lian-jie-dai-bu.html"
   },
   {
+    "yqid": "xglgbgumrkzdhgg9",
+    "slug": "2023-xue-xiao-guan-fang-bu-men-yu-jiao-xue-tui-chu-yammer",
+    "title": "学校官方部门与教学退出 Yammer",
+    "date": "2023.9",
+    "contentFile": "2023-xue-xiao-guan-fang-bu-men-yu-jiao-xue-tui-chu-yammer.html"
+  },
+  {
     "slug": "2024-shuang-luo-xuan-diao-su-luo-cheng",
     "title": "双螺旋雕塑落成",
     "date": "2024.2",
     "contentFile": "2024-shuang-luo-xuan-diao-su-luo-cheng.html",
     "yqid": "xkepxrwxftyb6wkz"
+  },
+  {
+    "yqid": "cv7dlqt8060mvt1x",
+    "slug": "2025-yu-ke-bu-xue-sheng-xiao-ban-bu-shu-zhi-neng-xue-ban-shi-yong-shou-xian",
+    "title": "预科部学生校板部署“智能学伴”，使用受限",
+    "date": "2025.7.20",
+    "contentFile": "2025-yu-ke-bu-xue-sheng-xiao-ban-bu-shu-zhi-neng-xue-ban-shi-yong-shou-xian.html"
+  },
+  {
+    "yqid": "aypzudz8kfcfmh0n",
+    "slug": "2025-xue-ban-tui-guang-zhi-zheng-ge-gao-zhong-bu",
+    "title": "“学伴”推广至整个高中部",
+    "date": "2025.8.26",
+    "contentFile": "2025-xue-ban-tui-guang-zhi-zheng-ge-gao-zhong-bu.html"
   },
   {
     "slug": "2025-shi-tang-wai-fu-ti-chai-chu",
