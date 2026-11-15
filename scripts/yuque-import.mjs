@@ -20,7 +20,7 @@ function stripTones(s) {
 
 function toSlug(text) {
   const result = [];
-  for (const readings of pinyin(text)) {
+  for (const readings of pinyin(text.toLowerCase())) {
     result.push(stripTones(readings[0]));
   }
   return result.join('-')
@@ -28,6 +28,27 @@ function toSlug(text) {
     .replace(/-{2,}/g, '-')
     .replace(/^-|-$/g, '')
     || 'untitled';
+}
+
+/**
+ * 解析 $meta.json 中的 book.tocYml，返回 LINK 节点（链接文档不出现在导出文件中）。
+ * LINK 节点的 url 指向另一篇语雀文档，末段即目标文档 slug。
+ */
+function parseTocLinks(tocYml) {
+  if (!tocYml) return [];
+  const nodes = [];
+  let node = null;
+  for (const line of tocYml.split('\n')) {
+    const start = line.match(/^\s*-\s*type:\s*(.+)$/);
+    if (start) {
+      node = { type: start[1].trim() };
+      nodes.push(node);
+      continue;
+    }
+    const field = node && line.match(/^\s+(title|url):\s*(.*)$/);
+    if (field) node[field[1]] = field[2].trim().replace(/^'(.*)'$|^"(.*)"$/, '$1$2');
+  }
+  return nodes.filter(n => n.type === 'LINK' && n.url);
 }
 
 async function main() {
@@ -76,6 +97,7 @@ async function main() {
     console.error('错误: $meta.json 中 docs 字段不是数组');
     process.exit(1);
   }
+  const linkNodes = parseTocLinks(meta.book?.tocYml);
 
   // === Phase 1: 收集元数据、计算 slug ===
 
@@ -368,7 +390,28 @@ async function main() {
           addedCount++;
         }
       }
-      console.log(`[专题] ${topicSlug}: 添加 ${addedCount} 个条目`);
+      // 链接节点指向站内已有条目，加入专题
+      let linkedCount = 0;
+      for (const node of linkNodes) {
+        let url;
+        try {
+          url = new URL(node.url);
+        } catch {
+          continue;
+        }
+        if (!url.hostname.endsWith('.yuque.com')) continue;
+        const yqid = url.pathname.split('/').filter(Boolean).pop();
+        if (!yqid) continue;
+        if (!merged.some(e => e.yqid === yqid)) {
+          console.warn(`[忽略链接] ${node.title}: 目标 ${yqid} 不在已有条目中`);
+          continue;
+        }
+        if (!topic.entries.includes(yqid)) {
+          topic.entries.push(yqid);
+          linkedCount++;
+        }
+      }
+      console.log(`[专题] ${topicSlug}: 添加 ${addedCount} 个条目${linkedCount ? `，${linkedCount} 个链接条目` : ''}`);
     }
 
     // 仅对本次有改动的专题重排
